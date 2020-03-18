@@ -1,0 +1,59 @@
+Instituto de Ciências Matemáticas e Computacionais
+Universidade de São Paulo - São Carlos
+Computação Gráfica - SCC0250 2020/1
+Prof. Ricardo Marcondes Marcacini
+Monitor PAE: Tiago Pinho da Silva - tpinho@usp.br
+Trabalho 1
+Instruções: Complete este trabalho sozinho ou em dupla, sem a ajuda de
+mais alguém, exceto o monitor PAE, e o professor. Entregue o trabalho
+pela plataforma e-disciplinas até 23h59 na data de vencimento.
+Introdução
+Até o momento, conseguimos exibir cenas bidimensionais, inserindo de
+maneira manual os vértices e executando funções como:
+GL_LINE_STRIP, GL_POINT, GL_TRIANGLE, etc. O problema, porém, é
+que quando as formas passam a ser complexas torna-se custoso a
+inserção manual dos vértices. Dessa maneira, funções podem ser
+definidas de modo que seja possível a criação dos vértices de maneira
+automática. Considere, por exemplo, o problema de exibir uma estrela
+utilizando linhas, discutido na Aula06. Nessa tarefa podemos definir duas
+funções para gerar os vértices de maneira automática, x =
+Raio*Cos(Angulo) e y = Raio*Sin(Angulo). Assim, basta incrementar a
+variável Angulo para obter os valores dos vértices da estrela.
+Outras definições fundamentais em computação gráfica que foram
+lecionadas até o momento são as transformações geométricas
+(Translação, Rotação e Escala). Cada transformação possui uma matriz
+associada, e a multiplicação entre elas pode criar novas matrizes capazes
+de aplicar mais de uma transformação por vez.
+Proposta do Trabalho
+A proposta do trabalho é dividida em duas etapas. A seguir são
+apresentadas as atividades de cada etapa e os respectivos pesos na
+avaliação do trabalho.
+1. Desenhar uma Mola 2D no centro da cena. (Peso: 2.0)
+a. Os vértices devem ser gerados automaticamente por uma
+função.
+Exemplo de mola 2D.
+2. Aplicar transformações geométricas na mola:
+a. Ao segurar na seta para baixo do teclado a mola deve
+comprimir em relação ao tempo pressionado (Escala). (Peso:
+2.0)
+Exemplo de compressão da mola
+b. Ao soltar a seta para baixo do teclado a mola deve voltar a
+sua forma original (Escala). (Peso: 2.0)
+Exemplo de descompressão da mola
+c. Quando voltar a forma original, em seguida a mola deve
+saltar para esquerda ou para a direita (Rotação e Translação).
+Esta escolha deve ser feito de maneira aleatória, no início do
+programa. (Peso: 4.0)
+Exemplo de animação da mola indo para a direita.
+Observações Importantes
+1. Vértices imputados manualmente causarão redução da nota. Os
+vértices da mola devem ser obtidos dinamicamente.
+2. Utilizar as matrizes de transformação (escala, rotação e translação)
+apresentadas em aula.
+3. Nesse momento, renderize apenas a Mola 2D. Em outro momento,
+trabalharemos com a versão 3D.
+4. O trabalho pode ser desenvolvido em dupla.
+5. O trabalho será aceito nas linguagens C/C++, Java e Python (com
+suporte do docente e PAE). Outras linguagens serão aceitas
+também, desde que utilize apenas bibliotecas do OpenGL e do
+sistema de Janelas (sem bibliotecas gráficas extras),
