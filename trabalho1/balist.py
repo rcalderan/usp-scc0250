@@ -6,7 +6,7 @@ import math
 
 glfw.init()
 glfw.window_hint(glfw.VISIBLE, glfw.FALSE);
-window = glfw.create_window(800, 800, "Trabalho1 - Mola 2D", None, None)
+window = glfw.create_window(800, 800, "Transformação Geométrica", None, None)
 glfw.make_context_current(window)
 
 vertex_code = """
@@ -58,17 +58,20 @@ if not glGetProgramiv(program, GL_LINK_STATUS):
 glUseProgram(program)
 
 # preparando espaço para n vértices usando 2 coordenadas (x,y)
+
 numberOfVertices =128
 vertices = np.zeros(numberOfVertices, [("position", np.float32, 2)])
 
+# preenchendo as coordenadas de cada vértice
+"""
+vertices['position'] = [
+                            (+0.15, +0.00), 
+                            (-0.05, -0.05), 
+                            (-0.05, +0.05)
+]"""
 
-'''
-1. Desenhar uma Mola 2D no centro da cena. (Peso: 2.0)
-a. Os vértices devem ser gerados automaticamente por uma
-função.
 
-'''
-def criaMola():#função para criação de mola. Basicamente um circulo com varias revoluções que vamos esticando  
+def criaMola():
     an=90
     tam=0
     for i in range(numberOfVertices):
@@ -76,7 +79,33 @@ def criaMola():#função para criação de mola. Basicamente um circulo com vari
         vertices['position'][i] =(px,tam)
         an+=30
         tam+=1/numberOfVertices
-criaMola()
+#criaMola()
+
+
+def criaParabola():
+    '''
+    parabola invertida
+    f(x) = -ax^2 +bx +c
+    delta = b^2 -4ac
+
+    solucao (bascara)
+    x= (-b +- sqr(delta) )/2a
+
+    se x=0 e c=0
+    0= (-b +- sqr(b^2) /2a)
+    2a= -b-b   =>   2a=-2b  
+    b=-a
+
+    '''
+    #saindo da origem, b=-a e c=0
+    a=-2
+    b=2
+    c=2
+    for i in range(numberOfVertices):
+        y=a*(i/numberOfVertices)**2 +b*(i/numberOfVertices)+c
+        vertices['position'][i] =(i/numberOfVertices,y)
+
+criaParabola()
 
 # Request a buffer slot from GPU
 buffer = glGenBuffers(1)
@@ -97,17 +126,6 @@ glEnableVertexAttribArray(loc)
 
 glVertexAttribPointer(loc, 2, GL_FLOAT, False, stride, offset)
 
-
-'''
-2. Aplicar transformações geométricas na mola:
-a. Ao segurar na seta para baixo do teclado a mola deve
-comprimir em relação ao tempo pressionado (Escala). (Peso:
-2.0)
-
-aplicamos a transformação de ESCALA para simular a compressão da mola
-'''
-
-
 # translacao e rotacao
 t_x = 0.0
 t_y = 0.0
@@ -117,31 +135,24 @@ x_inc = 0.0
 y_inc = 0.0
 r_inc = 0.0
 
-cos = math.cos(math.radians(angulo))
-sen = math.sin(math.radians(angulo))
-
 deform =0.25
-
-keypressed=0
-isMoving= False
 
 def key_event(window,key,scancode,action,mods):
     global deform
     
-    print('[key event] key=',key)
-    print('[key event] scancode=',scancode)
-    print('[key event] action=',action)
-    print('[key event] mods=',mods)
-    print('-------')
+    # tecla SETA CIMA
+    if key == 265:
+        if deform < 0.40:
+            deform += 0.02
+        #x_inc += 0.0001
+        
     
-    # inicia a deformação da amola
-    if not isMoving:
-        if key == 264:
-            keypressed=action
-            if deform >0.05:
-                deform -= 0.02
-        else:
-            keypressed=0
+    # tecla SETA BAIXO
+    if key == 264:
+        print('[mouse event] action=',action)
+        if deform >0.1:
+            deform -= 0.02
+        #x_inc -= 0.0001
         
 
     
@@ -153,23 +164,11 @@ def verifica_fronteiras():
         t_x = -t_x
         t_y = -t_y
 
-sentido = 1
 def calcular_coordenadas_x_y():
-    global t_x, t_y,sentido, cos,sen,angulo
-    a=-3.5
-    incr =0.03
-    if t_x > -1 and t_x < 1:
-        t_x+= incr * sentido
-    else:
-        sentido= -1*sentido        
-        t_x+= incr * sentido
+    global t_x, t_y
     
-    t_y=a*(t_x)**2 -a*(t_x)
-
-    angulo+=1
-
-    cos = math.cos(math.radians(angulo))
-    sen = math.sin(math.radians(angulo))
+    t_x += 0.01
+    t_y += 0
 
 
 glfw.show_window(window)
@@ -184,10 +183,6 @@ def multiplica_matriz(a,b):
 
 while not glfw.window_should_close(window):
 
-    #a mola deve retornar ao estado original de deformação quando a seta não está sendo pressionada
-    if deform < 0.25 and keypressed == 0:
-        deform += 0.02
-    
     #calcular_coordenadas_x_y()
     glfw.poll_events() 
 
@@ -195,8 +190,16 @@ while not glfw.window_should_close(window):
     glClear(GL_COLOR_BUFFER_BIT) 
     glClearColor(1.0, 1.0, 1.0, 1.0)
     
-    mat_rotation = np.array([  cos  , -sen , 0.0, 0.0, 
-                               sen  , cos  , 0.0, 0.0, 
+    
+    #Draw Triangle
+    '''
+    mat_rotation = np.array([  c  , -s , 0.0, 0.0, 
+                               s  , c  , 0.0, 0.0, 
+                               0.0, 0.0, 1.0, 0.0, 
+                               0.0, 0.0, 0.0, 1.0], np.float32)
+                               '''
+    mat_rotation = np.array([  1  , 0 , 0.0, 0.0, 
+                               0  , 1  , 0.0, 0.0, 
                                0.0, 0.0, 1.0, 0.0, 
                                0.0, 0.0, 0.0, 1.0], np.float32)
     
@@ -214,7 +217,7 @@ while not glfw.window_should_close(window):
     mat_transform = multiplica_matriz(mat_translation,mat_rotation)
     
     mat_transform = multiplica_matriz(mat_translation,mat_scala)
-
+    
     loc = glGetUniformLocation(program, "mat")
     glUniformMatrix4fv(loc, 1, GL_TRUE, mat_transform)
     
