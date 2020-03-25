@@ -66,7 +66,7 @@ vertices = np.zeros(numberOfVertices, [("position", np.float32, 2)])
 1. Desenhar uma Mola 2D no centro da cena. (Peso: 2.0)
 a. Os vértices devem ser gerados automaticamente por uma
 função.
-
+aqui
 '''
 def criaMola():#função para criação de mola. Basicamente um circulo com varias revoluções que vamos esticando  
     an=90
@@ -126,18 +126,20 @@ keypressed=0
 isMoving= False
 
 def key_event(window,key,scancode,action,mods):
-    global deform
+    global deform, keypressed
     
+    '''
     print('[key event] key=',key)
     print('[key event] scancode=',scancode)
     print('[key event] action=',action)
-    print('[key event] mods=',mods)
-    print('-------')
-    
-    # inicia a deformação da amola
+    print('[key event] mods=',mods)# ah entendi
+    print('-------') # eu acho que ela fica 2 quando fica pressionado. Entendi
+    '''
+   
+    # inicia a deformação da amola  
     if not isMoving:
         if key == 264:
-            keypressed=action
+            keypressed=action # sim, mas não esta funcionando
             if deform >0.05:
                 deform -= 0.02
         else:
@@ -155,22 +157,36 @@ def verifica_fronteiras():
 
 sentido = 1
 def calcular_coordenadas_x_y():
-    global t_x, t_y,sentido, cos,sen,angulo
-    a=-3.5
-    incr =0.03
-    if t_x > -1 and t_x < 1:
-        t_x+= incr * sentido
-    else:
-        sentido= -1*sentido        
-        t_x+= incr * sentido
+    global t_x, t_y,sentido, cos,sen,angulo,isMoving
     
-    t_y=a*(t_x)**2 -a*(t_x)
+    incr =0.03
+    if isMoving: #move somente quando o gatilho for disparado
+        angulo+=0.01
+        
+        t_y = math.cos(angulo)
+        t_x = math.sin(angulo)
+    #t_y =t_x*cos
+'''
+def calcular_coordenadas_x_y():
+    global t_x, t_y,sentido, cos,sen,angulo,isMoving
+    
+    incr =0.03
+    if isMoving: #move somente quando o gatilho for disparado
+        if (t_x > -0.5 and t_x < 0.2) or( t_y > -0.5 and t_y < 0.5):
+            t_x+= incr * sentido
+        else:
+            isMoving=False
+            sentido= -1*sentido        
+            t_x+= incr * sentido  
 
+    a=-1.5 # a = -b e c=0, balistica a partir da origem
+    t_y=a*(t_x)**2 -a*(t_x) #formula da parabola
     angulo+=1
-
     cos = math.cos(math.radians(angulo))
     sen = math.sin(math.radians(angulo))
+    #t_y =t_x*cos
 
+'''
 
 glfw.show_window(window)
 
@@ -180,15 +196,17 @@ def multiplica_matriz(a,b):
     m_c = np.dot(m_a,m_b)
     c = m_c.reshape(1,16)
     return c
-
+    
 
 while not glfw.window_should_close(window):
-
-    #a mola deve retornar ao estado original de deformação quando a seta não está sendo pressionada
-    if deform < 0.25 and keypressed == 0:
-        deform += 0.02
     
-    #calcular_coordenadas_x_y()
+    #a mola deve retornar ao estado original de deformação quando a seta não está sendo pressionada 
+    if deform < 0.25 and keypressed == 0:
+        deform += 0.03
+        if deform >= 0.25:
+            isMoving=True
+    
+    calcular_coordenadas_x_y()
     glfw.poll_events() 
 
     
