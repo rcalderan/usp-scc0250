@@ -1,0 +1,108 @@
+Richard Calderan
+nusp: 3672382
+
+Lista de Exercícios - Transformações Geométricas 2D
+
+1) O que são e por qual motivo utilizar coordenadas homogêneas para
+especificar transformações geométricas em CG?
+Resp:
+
+
+2) Apresente a matriz que representa uma transformação consistindo de
+uma translação seguida de uma rotação.
+Resp: Dado o ponto (x,y) suas matrizes de translação 
+m_tr = [1.0, 0.0, 0.0, x, 
+        0.0, 1.0, 0.0, y, 
+        0.0, 0.0, 1.0, z, 
+        0.0, 0.0, 0.0, 1.0]
+Dada a matriz de rotação (no eixo z) pelo angulo "a"
+m_rot = [cos(a), -sen(a), 0.0, 0.0, 
+        sen(a), cos(a), 0.0, 0.0, 
+        0.0,     0.0,   1.0, 0.0, 
+        0.0,     0.0,   0.0, 1.0]
+
+a matriz resultante (m_tranf) de uma translação seguida de rotação será a multiplicação da matriz m_tr por m_rot
+
+m_tranf = m_tr * m_rot
+
+m_tranf = [cos(a), -sen(a), 0.0,   x, 
+           sen(a),  cos(a), 0.0,   y, 
+              0.0,     0.0, 1.0, 0.0, 
+              0.0,     0.0, 0.0, 1.0]
+
+3) Apresente a matriz que representa uma transformação consistindo de
+uma translação seguida de uma escala uniforme.
+Resp:Como a escala é uniforma, então a escala é aplicada igualmente em todos os eixos (dada por valor="uni")
+m_esc =[uni, 0.0, 0.0, 0.0, 
+        0.0, uni, 0.0, 0.0, 
+        0.0, 0.0, uni, 0.0, 
+        0.0, 0.0, 0.0, 1.0]
+        
+a matriz resultante (m_tranf) de uma translação seguida de escala uniforme será a multiplicação da matriz m_tr por m_esc
+
+m_tranf = m_tr * m_esc
+
+m_tranf=[uni, 0.0, 0.0,   x, 
+         0.0, uni, 0.0,   y, 
+         0.0, 0.0, uni,   z, 
+         0.0, 0.0, 0.0, 1.0]
+
+4) Verifique se R(angulo1+angulo2) irá obter a mesma matriz de
+transformação do que R(angulo1)*R(angulo2).
+resp: 
+a matriz de rotação do angilo a+b é
+[cos(a+b), -sen(a+b), 0.0,   0, 
+sen(a+b),  cos(a+b),  0.0,   0, 
+     0.0,       0.0,  1.0, 0.0, 
+     0.0,       0.0,  0.0, 1.0]
+
+a matriz transformação de R(a)* R(b) é
+[cos(a)*cos(b)+ (-sen(a)*sen(b)), cos(a)*(-sen(b))+ (-sen(a)*cos(b)), 0,   0,  0
+sen(a)*cos(b)+cos(a)*sen(b),  cos(a+b),  0.0,   0, 
+     0.0,       0.0,  1.0, 0.0, 
+     0.0,       0.0,  0.0, 1.0]
+
+
+sabemos que (soma de arcos trigonometricos)
+cos(a+b) = cos(a)*cos(b) - sen(a)*sen(b) e sen(a+b) = sen(a)*cos(b) +sen(b)*cos(a)
+portanto, o primeiro elemento da matriz R(a+b) deve ser igual ao primeiro elemento da matriz R(a)*R(b), assim como os demais elementos correspondentes
+R(a+b)[0] = (R(a)*R(b)[0])
+cos(a+b) = cos(a)*cos(b)+ (-sen(a)*sen(b))
+R(a+b)[1] = (R(a)*R(b)[1])
+-sen(a+b) = cos(a)*(-sen(b))+ (-sen(a)*cos(b)) ==  (-1)* sen(a)*cos(b) + sen(b)*cos(a) 
+
+R(a+b)[2] = (R(a)*R(b)[2])
+0=0
+
+R(a+b)[4] = (R(a)*R(b)[4]) == R(a+b)[0] = (R(a)*R(b)[0]) ==R(a+b)[5] = (R(a)*R(b)[5])
+
+Portantanto, R(a+b) e R(a)*R(b) possuem a mesma matriz de transformação.
+
+5) Forneça a matriz de transformação que realiza a transformação
+abaixo (a seta indica o objeto inicial e o final após a transformação).
+resp: Pf=posiçao final, M= matriz transformação e P=posição final
+
+Pf = M * P0
+Pf=[80,
+    100,
+    1]
+P0=[20,
+    20,
+     0]
+M = [1, 0, x, 
+     0, 1, y,
+     0, 0, 1] 
+assim, 80 = 20*1+20*0+ x*1 e portrtanto x =60
+e 100 0 0*20+1*20+ y*1  portanto y=80
+M = [1, 0, 60, 
+     0, 1, 80,
+     0, 0,  1]
+
+6) Abaixo é apresentada a matriz resultante de quatro transformações.
+Aplique esta transformação em triângulo ABC (A=(0,0), B=(1,0),
+C=(0,1)) e mostre o resultado (novos vértices e o desenho).
+RESP:
+aplicamos a matriz de transformação resultante para cada vertice. O resultado será A'
+A(0,0) => A'(3,2)
+B(1,0) => B'(4.2,-0.4)
+C(0,1) => C'(2,0) 
