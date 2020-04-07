@@ -63,49 +63,24 @@ numberOfVertices =128
 vertices = np.zeros(numberOfVertices, [("position", np.float32, 2)])
 
 # preenchendo as coordenadas de cada vértice
-"""
-vertices['position'] = [
-                            (+0.15, +0.00), 
-                            (-0.05, -0.05), 
-                            (-0.05, +0.05)
-]"""
-
-
-def criaMola():
-    an=90
-    tam=0
-    for i in range(numberOfVertices):
-        px = math.sin( math.radians(an))
-        vertices['position'][i] =(px,tam)
-        an+=30
-        tam+=1/numberOfVertices
-#criaMola()
 
 
 def criaParabola():
-    '''
-    parabola invertida
-    f(x) = -ax^2 +bx +c
-    delta = b^2 -4ac
-
-    solucao (bascara)
-    x= (-b +- sqr(delta) )/2a
-
-    se x=0 e c=0
-    0= (-b +- sqr(b^2) /2a)
-    2a= -b-b   =>   2a=-2b  
-    b=-a
-
-    '''
     #saindo da origem, b=-a e c=0
-    a=-2
-    b=2
-    c=2
+    a=-.5
+    b=-1*a
+    c=0
     for i in range(numberOfVertices):
-        y=a*(i/numberOfVertices)**2 +b*(i/numberOfVertices)+c
-        vertices['position'][i] =(i/numberOfVertices,y)
-
+        p=i+4
+        y=a*(p/numberOfVertices)**2 +b*(p/numberOfVertices)+c
+        if(p<numberOfVertices-1):
+            vertices['position'][p] =(p/numberOfVertices,y)
 criaParabola()
+
+vertices['position'][0] =(0,-1)
+vertices['position'][1] =(0,1)
+vertices['position'][2] =(-1,0)
+vertices['position'][3] =(1,0)
 
 # Request a buffer slot from GPU
 buffer = glGenBuffers(1)
@@ -209,8 +184,8 @@ while not glfw.window_should_close(window):
                                   0.0, 0.0, 0.0, 1.0], np.float32)
     
 
-    mat_scala = np.array([  .15  , 0.0 , 0.0, 0.0, 
-                            0.0  , deform  , 0.0, 0.0, 
+    mat_scala = np.array([  1  , 0.0 , 0.0, 0.0, 
+                            0.0  , 1  , 0.0, 0.0, 
                             0.0, 0.0, 1.0, 0.0, 
                             0.0, 0.0, 0.0, 1.0], np.float32)
     
@@ -221,7 +196,11 @@ while not glfw.window_should_close(window):
     loc = glGetUniformLocation(program, "mat")
     glUniformMatrix4fv(loc, 1, GL_TRUE, mat_transform)
     
-    glDrawArrays(GL_LINE_STRIP, 0, len(vertices))
+
+    glDrawArrays(GL_LINES, 0, 2)
+    glDrawArrays(GL_LINES, 2, 2)
+
+    glDrawArrays(GL_LINE_STRIP, 4, len(vertices)-4)
 
     glfw.swap_buffers(window)
 

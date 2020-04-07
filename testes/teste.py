@@ -4,9 +4,43 @@ import OpenGL.GL.shaders
 import numpy as np
 import math
 
+import gpxpy 
+import gpxpy.gpx 
+
+
+
+gpx_file = open('gpx.gpx', 'r') 
+
+gpx = gpxpy.parse(gpx_file)
+points =gpx.tracks[0].segments[0].points
+print(len(points))
+
+def selectPoints(pts):
+    selected = []
+    lP=pts[0]
+    dif=0
+    sum=0
+    for p in pts:
+        dif = p.latitude + lP.latitude*(-1)
+        if dif<0:
+            dif=-1*dif
+        dif*=100000
+        sum+=dif
+        if sum>20:
+            #print ('Point at ({0},{1}) -> {2}'.format(p.latitude, p.longitude, sum) )
+            selected.append(p)
+            sum=0
+        #if dif>5:
+        lP=p
+    return selected
+#selectPoints(points)
+points = selectPoints(points)
+print(len(points))
+
+
 glfw.init()
 glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
-window = glfw.create_window(800, 800, "Trabalho1 - Mola 2D", None, None)
+window = glfw.create_window(800, 800, "teste", None, None)
 glfw.make_context_current(window)
 
 vertex_code = """
@@ -58,39 +92,29 @@ if not glGetProgramiv(program, GL_LINK_STATUS):
 glUseProgram(program)
 
 # preparando espaço para n vértices usando 2 coordenadas (x,y)
-numberOfVertices = 128
-vertices = np.zeros(numberOfVertices, [("position", np.float32, 2)])
 
+vertices = np.zeros(len(points), [("position", np.float32, 2)])
+i=0
+aj=-1
+mx=0
+my=0
+la=0
+lo=0
+for p in points:
 
-'''
-1. Desenhar uma Mola 2D no centro da cena. (Peso: 2.0)
-a. Os vértices devem ser gerados automaticamente por uma
-função.
-aqui
-'''
+    la=p.latitude+22.017
+    lo=p.longitude+47.896
+    mx+=la
+    my+=lo
+    vertices['position'][i] = ( (la,lo))
+    
+    #print ('Point at ({0},{1}) -> {2}'.format(p.latitude, p.longitude, p.elevation) )
 
+    i+=1
+    #print((p.latitude+22))
+    #print(p.longitude*0.01)
 
-def criaMola1():  # função para criação de mola. Basicamente um circulo com varias revoluções que vamos esticando
-    an = 90
-    tam = 0
-    for i in range(numberOfVertices):
-        px = math.sin(math.radians(an))
-        vertices['position'][i] = (px, tam)
-        an += 30
-        tam += 1/numberOfVertices
-
-def criaMola(tam):  # função para criação de mola. Basicamente um circulo com varias revoluções que vamos esticando
-    an = 90
-    py=-tam/2
-    for i in range(numberOfVertices):
-        px = math.sin(math.radians(an))
-        vertices['position'][i] = (px/8, py)
-        an += 30
-        py += tam/numberOfVertices
-
-tamanho=0.5
-criaMola(tamanho)
-
+#vertices['position'][0]=((0,0))
 # Request a buffer slot from GPU
 buffer = glGenBuffers(1)
 # Make this buffer the default one
@@ -111,97 +135,31 @@ glEnableVertexAttribArray(loc)
 glVertexAttribPointer(loc, 2, GL_FLOAT, False, stride, offset)
 
 
-'''
-2. Aplicar transformações geométricas na mola:
-a. Ao segurar na seta para baixo do teclado a mola deve
-comprimir em relação ao tempo pressionado (Escala). (Peso:
-2.0)
 
-aplicamos a transformação de ESCALA para simular a compressão da mola
-'''
-
-
-# globais
-xi=0
-yi=tamanho/2
-t_x = xi
-t_y = yi
-angulo = 0.0
-
-cos = math.cos(math.radians(angulo))
-sin = math.sin(math.radians(angulo))
-
-deform = 1
-
-keypressed = 0
-isMoving = False
-
-sentido = np.random.randint(2)
-
-
+t_x=0 #mx/len(points)
+t_y=-4#my/len(points)
+scala =100
 def key_event(window, key, scancode, action, mods):
-    global deform, keypressed, isMoving
-
+    global t_x,t_y,scala
     # inicia a deformação da amola
+    
     if key == 264:
-        if not isMoving:
-            keypressed = action 
-            if deform > 0.15:
-                deform -= 0.02
-        else:
-            keypressed = 0
-            isMoving = True
+        t_y-= 0.001
 
+    if key == 265:
+        t_y+= 0.001
+    if key == 262:
+        t_x+= 0.001
+    if key == 263:
+        t_x-= 0.001
+        
+    if key == 267:
+        scala-= 0.5
+    if key == 266:
+        scala+= 0.5
 
 glfw.set_key_callback(window, key_event)
 
-x0 = 0
-
-def calcular_coordenadas_x_y():
-    global t_x, t_y, xi,yi,cos, sin, sentido, angulo, isMoving, deform
-    # intensidade da deformação pode ser:
-    intens = 0.4
-    # print(angulo)
-    if isMoving:  # move somente quando o gatilho for disparado
-        if sentido > 0:
-            angulo += intens
-        else:
-            angulo -= intens
-        if angulo < 0:
-            isMoving = False
-            sentido = np.random.randint(2)
-            angulo = 0
-            return
-        if angulo > 180:
-            isMoving = False
-            sentido = np.random.randint(2)
-            angulo = 180
-            return
-        cos = math.cos(math.radians(angulo))
-        sin = math.sin(math.radians(angulo))
-        t_x = xi+cos/2
-        t_y = yi+sin/2
-    else:
-        xi=t_x
-        yi=t_y
-
-def lancamento():
-    global t_x,t_y, isMoving
-    #partindo da origem, b=-a e c=0
-    a=-2
-    b=1
-    c=0 
-    if isMoving:
-        if sentido > 0:
-            t_x+=0.001
-        else:
-            t_x-=0.001
-        
-        t_y=a*(t_x)**2 +b*(t_x)+c
-        t_y=t_y
-        #if t_y>=0:
-        #else:
-         #   isMoving=False
 
 
 glfw.show_window(window)
@@ -215,48 +173,50 @@ def multiplica_matriz(a, b):
     return c
 
 
+angulo = 180.0
+
+cos = math.cos(math.radians(angulo))
+sin = math.sin(math.radians(angulo))
 while not glfw.window_should_close(window):
 
     # a mola deve retornar ao estado original de deformação quando a seta não está sendo pressionada
     
-    if deform < 1 and keypressed == 0:
-        deform += 0.03
-        if deform >= 0.25:
-            sentido = np.random.randint(2)
-            isMoving = True
-
-    lancamento()
+    mat_transform = np.array([1.0, 0.0, 0.0, 0,
+                          0.0, 1.0, 0.0, 0,
+                          0.0, 0.0, 1.0, 0.0,
+                          0.0, 0.0, 0.0, 1.0], np.float32)
     glfw.poll_events()
 
     glClear(GL_COLOR_BUFFER_BIT)
     glClearColor(1.0, 1.0, 1.0, 1.0)
-
     mat_rotation = np.array([cos, -sin, 0.0, 0.0,
                              sin, cos, 0.0, 0.0,
                              0.0, 0.0, 1.0, 0.0,
                              0.0, 0.0, 0.0, 1.0], np.float32)
+
 
     mat_translation = np.array([1.0, 0.0, 0.0, t_x,
                                 0.0, 1.0, 0.0, t_y,
                                 0.0, 0.0, 1.0, 0.0,
                                 0.0, 0.0, 0.0, 1.0], np.float32)
 
-    mat_scala = np.array([1.0, 0.0, 0.0, 0.0,
-                          0.0, deform, 0.0, 0.0,
+    mat_scala = np.array([scala, 0.0, 0.0, 0.0,
+                          0.0, scala, 0.0, 0.0,
                           0.0, 0.0, 1.0, 0.0,
                           0.0, 0.0, 0.0, 1.0], np.float32)
 
-    mat_transform = multiplica_matriz(mat_scala, mat_translation)
+    mat_transform = multiplica_matriz(mat_transform, mat_translation)
 
     mat_transform = multiplica_matriz(mat_transform, mat_rotation)
 
-    #mat_transform = multiplica_matriz(mat_transform, )
+    mat_transform = multiplica_matriz(mat_transform, mat_scala)
 
 
     loc = glGetUniformLocation(program, "mat")
     glUniformMatrix4fv(loc, 1, GL_TRUE, mat_transform)
 
     glDrawArrays(GL_LINE_STRIP, 0, len(vertices))
+    
 
     glfw.swap_buffers(window)
 
