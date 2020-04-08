@@ -160,48 +160,32 @@ x0 = 0
 def calcular_coordenadas_x_y():
     global t_x, t_y, xi,yi,cos, sin, sentido, angulo, isMoving, deform
     # intensidade da deformação pode ser:
-    intens = 0.4
+    variant = 0.4
+    intensit = .3
     # print(angulo)
     if isMoving:  # move somente quando o gatilho for disparado
+        print(sentido)
         if sentido > 0:
-            angulo += intens
+            angulo += variant
         else:
-            angulo -= intens
+            angulo -= variant
         if angulo < 0:
             isMoving = False
             sentido = np.random.randint(2)
-            angulo = 0
+            angulo = 1
             return
-        if angulo > 180:
+        if angulo >= 180:
             isMoving = False
             sentido = np.random.randint(2)
-            angulo = 180
+            angulo = 179
             return
         cos = math.cos(math.radians(angulo))
         sin = math.sin(math.radians(angulo))
-        t_x = xi+cos/2
-        t_y = yi+sin/2
+        t_x = xi+cos*intensit
+        t_y = yi+sin*intensit
     else:
-        xi=t_x
-        yi=t_y
-
-def lancamento():
-    global t_x,t_y, isMoving
-    #partindo da origem, b=-a e c=0
-    a=-2
-    b=1
-    c=0 
-    if isMoving:
-        if sentido > 0:
-            t_x+=0.001
-        else:
-            t_x-=0.001
-        
-        t_y=a*(t_x)**2 +b*(t_x)+c
-        t_y=t_y
-        #if t_y>=0:
-        #else:
-         #   isMoving=False
+        xi=0
+        yi=0
 
 
 glfw.show_window(window)
@@ -225,7 +209,7 @@ while not glfw.window_should_close(window):
             sentido = np.random.randint(2)
             isMoving = True
 
-    lancamento()
+    calcular_coordenadas_x_y()
     glfw.poll_events()
 
     glClear(GL_COLOR_BUFFER_BIT)
