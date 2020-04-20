@@ -1,3 +1,6 @@
+# Richard Calderan - 3267382
+#Trabalho 1
+
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
@@ -122,10 +125,12 @@ aplicamos a transformação de ESCALA para simular a compressão da mola
 
 
 # globais
-xi=0
-yi=tamanho/2
-t_x = xi
-t_y = yi
+t_x = 0
+t_y = tamanho/2
+
+xi = t_x
+yi = t_y
+
 angulo = 0.0
 
 cos = math.cos(math.radians(angulo))
@@ -140,52 +145,58 @@ sentido = np.random.randint(2)
 
 
 def key_event(window, key, scancode, action, mods):
-    global deform, keypressed, isMoving
+    global deform, keypressed, isMoving,sentido, angulo
 
     # inicia a deformação da amola
     if key == 264:
         if not isMoving:
+            if action==0:
+                if np.random.randint(2)==1:
+                    sentido=1
+                    angulo=0
+                else:
+                    sentido=-1
+                    angulo=180
             keypressed = action 
-            if deform > 0.15:
+            if deform > 0.55:
                 deform -= 0.02
         else:
             keypressed = 0
             isMoving = True
 
-
 glfw.set_key_callback(window, key_event)
-
-x0 = 0
 
 def calcular_coordenadas_x_y():
     global t_x, t_y, xi,yi,cos, sin, sentido, angulo, isMoving, deform
     # intensidade da deformação pode ser:
-    variant = 0.4
-    intensit = .3
-    # print(angulo)
+    variant = 3
+    intensit = .25 #o
+
     if isMoving:  # move somente quando o gatilho for disparado
-        print(sentido)
-        if sentido > 0:
+        #print(sentido)
+        #print(angulo)
+        print(t_x)
+        if sentido > -1:
             angulo += variant
         else:
             angulo -= variant
+
         if angulo < 0:
             isMoving = False
-            sentido = np.random.randint(2)
-            angulo = 1
-            return
+            angulo = 0
+            #xi =t_x
+            print('foi dir')
         if angulo >= 180:
             isMoving = False
-            sentido = np.random.randint(2)
-            angulo = 179
-            return
+            angulo = 180
+            #xi =t_x            
+            print('foi esq')
+    
         cos = math.cos(math.radians(angulo))
         sin = math.sin(math.radians(angulo))
-        t_x = xi+cos*intensit
-        t_y = yi+sin*intensit
-    else:
-        xi=0
-        yi=0
+        t_x = xi + cos*intensit
+        t_y = yi + sin*intensit
+    
 
 
 glfw.show_window(window)
@@ -201,12 +212,10 @@ def multiplica_matriz(a, b):
 
 while not glfw.window_should_close(window):
 
-    # a mola deve retornar ao estado original de deformação quando a seta não está sendo pressionada
-    
+    # a mola deve retornar ao estado original de deformação quando a seta não está sendo pressionada    
     if deform < 1 and keypressed == 0:
         deform += 0.03
-        if deform >= 0.25:
-            sentido = np.random.randint(2)
+        if deform >= 0.55:
             isMoving = True
 
     calcular_coordenadas_x_y()
@@ -215,6 +224,11 @@ while not glfw.window_should_close(window):
     glClear(GL_COLOR_BUFFER_BIT)
     glClearColor(1.0, 1.0, 1.0, 1.0)
 
+    
+    mat_origen = np.array([1.0, 0.0, 0.0, 0,
+                                0.0, 1.0, 0.0, 0,
+                                0.0, 0.0, 1.0, 0.0,
+                                0.0, 0.0, 0.0, 1.0], np.float32)
     mat_rotation = np.array([cos, -sin, 0.0, 0.0,
                              sin, cos, 0.0, 0.0,
                              0.0, 0.0, 1.0, 0.0,
@@ -230,12 +244,9 @@ while not glfw.window_should_close(window):
                           0.0, 0.0, 1.0, 0.0,
                           0.0, 0.0, 0.0, 1.0], np.float32)
 
-    mat_transform = multiplica_matriz(mat_scala, mat_translation)
 
-    mat_transform = multiplica_matriz(mat_transform, mat_rotation)
-
-    #mat_transform = multiplica_matriz(mat_transform, )
-
+    mat_transform = multiplica_matriz(mat_scala,mat_translation)
+    mat_transform = multiplica_matriz(mat_transform,mat_rotation)
 
     loc = glGetUniformLocation(program, "mat")
     glUniformMatrix4fv(loc, 1, GL_TRUE, mat_transform)
