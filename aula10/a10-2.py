@@ -7,8 +7,8 @@ import math
 
 glfw.init()
 glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
-altura = 700
-largura = 700
+altura = 800
+largura = 800
 window = glfw.create_window(largura, altura, "Cameras - Matriz Model", None, None)
 glfw.make_context_current(window)
 
@@ -65,7 +65,8 @@ if not glGetProgramiv(program, GL_LINK_STATUS):
 glUseProgram(program)
 
 num_cubos = 5 # cinco cubos
-vertices = np.zeros(num_cubos*24, [("position", np.float32, 3)])
+num_piramides = 2 # cinco cubos
+vertices = np.zeros(num_cubos*24+num_piramides*16, [("position", np.float32, 3)])
 
 def get_cubo():
     cubo = [
@@ -108,6 +109,37 @@ def get_cubo():
     return cubo
 
 
+def get_piramide():
+    piramide = [
+    # Face 1
+    (-0.1, -0.1, -0.1), 
+    (-0.1, -0.1, +0.1),
+    (+0.1, -0.1, -0.1),
+    (+0.1, -0.1, +0.1),
+
+    # Face 2
+    (-0.1, -0.1, +0.1),
+    (+0.1, -0.1, +0.1),        
+    (+0.05, +0.05, +0.05),
+    
+    # Face 3
+    (+0.1, -0.1, -0.1),
+    (-0.1, -0.1, -0.1),        
+    (+0.05, +0.05, +0.05),
+
+    # Face 4
+    (-0.1, -0.1, -0.1),
+    (-0.1, -0.1, +0.1),         
+    (+0.05, +0.05, +0.05),
+
+    # Face 5
+    (-0.1, -0.1, -0.1),
+    (+0.1, -0.1, -0.1),         
+    (+0.05, +0.05, +0.05)]
+    
+    return piramide
+
+
 # preenchendo o vetor de vertices com todos os cubos (num_cubos)
 cubos = get_cubo() # cubo numero 1
 for i in range(1,num_cubos): # pegando o restante dos outros cubos
@@ -116,8 +148,21 @@ for i in range(1,num_cubos): # pegando o restante dos outros cubos
     
     # adicionando os vertices do cubo no nosso vertor de vertices
     cubos = np.concatenate((cubos, vert_cubo), axis=0)
+objetos=[]
+for i in range(len(cubos)):
+    objetos.append(cubos[i])
+
+piramides = get_piramide()
+for i in range(1,num_piramides): # pegando o restante dos outros cubos
+    # pegando um novo cubo
+    vert_p = get_piramide()
     
-vertices['position'] = cubos
+    # adicionando os vertices do cubo no nosso vertor de vertices
+    piramides = np.concatenate((piramides, vert_p), axis=0)
+for i in range(len(piramides)):
+    objetos.append(piramides[i])
+    
+vertices['position'] = objetos
 
 # Request a buffer slot from GPU
 buffer = glGenBuffers(1)
@@ -241,7 +286,7 @@ glfw.set_cursor_pos(window, lastX, lastY)
 
 glEnable(GL_DEPTH_TEST) ### importante para 3D
 
-def desenha_cubo(num_cubo, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z):
+def desenha_cubo(index, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z):
     
     mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     loc_model = glGetUniformLocation(program, "model")
@@ -258,14 +303,73 @@ def desenha_cubo(num_cubo, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z):
     
     # DESENHANDO O CUBO
     face = 0
-    for i in range(num_cubo*24,(num_cubo+1)*24,4): # incremento de 4 em 4 (desenhando cada face)
+    for i in range(index*24,(index+1)*24,4): # incremento de 4 em 4 (desenhando cada face)
         R = cores_face[face][0]
         G = cores_face[face][1]
         B = cores_face[face][2]
         glUniform4f(loc_color, R, G, B, 1.0) ### definindo uma cor
         glDrawArrays(GL_TRIANGLE_STRIP, i, 4) ## renderizando
         face+=1
-        
+
+def desenha_piramide(index, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z):
+    
+    mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    loc_model = glGetUniformLocation(program, "model")
+    glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
+    
+    cores_face = [
+        [1.0, 1.0, 0.0],
+        [1.0, 0.0, 0.0], # R, G, B
+        [0.0, 0.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [0.0, 1.0, 0.0],  
+        [0.0, 1.0, 0.0],  
+        [0.0, 1.0, 0.0],  
+        [0.0, 1.0, 0.0],  
+        [0.0, 1.0, 0.0],  
+        [0.0, 1.0, 0.0],  
+    ]
+    
+    # DESENHANDO 
+    # #base
+    R = cores_face[0][0]
+    G = cores_face[0][1]
+    B = cores_face[0][2]
+    glUniform4f(loc_color, R, G, B, 1.0)
+    glDrawArrays(GL_TRIANGLE_STRIP, index*16, 4) ## renderizando
+    
+    R = cores_face[1][0]
+    G = cores_face[1][1]
+    B = cores_face[1][2]
+    glUniform4f(loc_color, R, G, B, 1.0)
+    glDrawArrays(GL_TRIANGLE_STRIP, index*16+4, 3) ## renderizando
+
+    print(index*16+4)
+    R = cores_face[2][0]
+    G = cores_face[2][1]
+    B = cores_face[2][2]
+    glUniform4f(loc_color, R, G, B, 1.0)
+    glDrawArrays(GL_TRIANGLE_STRIP, index*16+8, 3) ## renderizando
+    
+    print(index*16+8)
+    R = cores_face[3][0]
+    G = cores_face[3][1]
+    B = cores_face[3][2]
+    glUniform4f(loc_color, R, G, B, 1.0)
+    glDrawArrays(GL_TRIANGLE_STRIP, index*16+11, 3) ## renderizando
+    
+    print(index*16+11)
+    
+    # #faces triangulares
+    # face = 1
+    # for i in range(index*16+1,(index+1)*16+face*3,3): # incremento de 3 em 3 
+    #     print(face)
+    #     R = cores_face[face][0]
+    #     G = cores_face[face][1]
+    #     B = cores_face[face][2]
+    #     glUniform4f(loc_color, R, G, B, 1.0) ### definindo uma cor
+    #     glDrawArrays(GL_TRIANGLE_STRIP, i, 4) ## renderizando
+    #     face+=1     
 
 while not glfw.window_should_close(window):
 
@@ -279,27 +383,27 @@ while not glfw.window_should_close(window):
     # computando e enviando matrizes Model, View e Projection para a GPU
     
     # temos uma matriz model por objeto!
-    num_cubo=0   
+    object_index=0   
     # angulo de rotacao e eixos
     angle=0.0; r_x=0.0; r_y=0.0; r_z=1.0
     # translacao
     t_x=0.5; t_y=0.0; t_z=0.0
     # escala
     s_x=1.0; s_y=1.0; s_z=1.0
-    desenha_cubo(num_cubo, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    desenha_cubo(object_index, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     
     
-    num_cubo=1
+    object_index=1
     # angulo de rotacao e eixos
     angle=0.0; r_x=0.0; r_y=0.0; r_z=1.0
     # translacao
     t_x=-0.5; t_y=0.0; t_z=0.0
     # escala
     s_x=1.0; s_y=1.0; s_z=1.0
-    desenha_cubo(num_cubo, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    desenha_cubo(object_index, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     
     
-    num_cubo=2
+    object_index=2
     # angulo de rotacao e eixos
     angle=-20.0; r_x=0.0; r_y=0.0; r_z=1.0
     # translacao
@@ -307,10 +411,10 @@ while not glfw.window_should_close(window):
     # escala
     s_x=0.2; s_y=5.0; s_z=5.0
     #s_x=1.0; s_y=1.0; s_z=1.0
-    desenha_cubo(num_cubo, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    desenha_cubo(object_index, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     
     
-    num_cubo=3
+    object_index=3
     # angulo de rotacao e eixos
     angle=20.0; r_x=0.0; r_y=0.0; r_z=1.0
     # translacao
@@ -318,17 +422,27 @@ while not glfw.window_should_close(window):
     # escala
     s_x=0.2; s_y=5.0; s_z=5.0
     #s_x=1.0; s_y=1.0; s_z=1.0
-    desenha_cubo(num_cubo, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    desenha_cubo(object_index, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     
     
-    num_cubo=4
+    object_index=4
     # angulo de rotacao e eixos
     angle=180.0; r_x=1.0; r_y=0.0; r_z=0.0
     # translacao
     t_x=0.0; t_y=0.4; t_z=0.0
     # escala
     s_x=15.0; s_y=0.1; s_z=15.0
-    desenha_cubo(num_cubo, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    desenha_cubo(object_index, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+
+    #agora desenhar as piramides
+    object_index=5
+    # angulo de rotacao e eixos
+    angle=0.0; r_x=1.0; r_y=0.0; r_z=0.0
+    # translacao
+    t_x=0.0; t_y=0.0; t_z=0.0
+    # escala
+    s_x=1.0; s_y=1.0; s_z=1.0
+    desenha_piramide(object_index, angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     
     mat_view = view()
     loc_view = glGetUniformLocation(program, "view")
@@ -337,9 +451,6 @@ while not glfw.window_should_close(window):
     mat_projection = projection()
     loc_projection = glGetUniformLocation(program, "projection")
     glUniformMatrix4fv(loc_projection, 1, GL_FALSE, mat_projection)    
-    
-    
-
     
     glfw.swap_buffers(window)
 
