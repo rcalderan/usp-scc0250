@@ -1,3 +1,15 @@
+"""
+Richard Calderan  - 3672382
+Exercicio alua 10 parte 4
+
+
+ ### setas w e s modifica o angulo field-of-view (fov) - campo de visao
+#Q, afasta near
+#A, aproxima near
+#E, afasta far
+#D aproxima far
+"""
+
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders

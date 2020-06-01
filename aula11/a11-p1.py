@@ -1,3 +1,9 @@
+"""
+Richard Calderan  - 3672382
+Exercicio alua 11 parte 1
+
+"""
+
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
@@ -203,7 +209,7 @@ def desenha_espada():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
     # desenha a espada
-    glDrawArrays(GL_TRIANGLES, 108, 20876-108) ## renderizando
+    glDrawArrays(GL_QUADS, 108, 20876-108) ## renderizando
     
     
 def desenha_planta():
@@ -227,7 +233,7 @@ def desenha_planta():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
     # desenha a planta
-    glDrawArrays(GL_TRIANGLES, 20876, 387596-20876-180) ## renderizando
+    glDrawArrays(GL_QUADS, 20876, 387596-20876) ## renderizando
     
     
 def desenha_gato():
@@ -251,7 +257,7 @@ def desenha_gato():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
     # desenha o gato
-    glDrawArrays(GL_TRIANGLES, 387596, 952204-387596-20876-180) ## renderizando
+    glDrawArrays(GL_QUADS, 387596, 952204-387596) ## renderizando
 
 # Request a buffer slot from GPU
 buffer = glGenBuffers(2)
