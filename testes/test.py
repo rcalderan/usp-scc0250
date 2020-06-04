@@ -194,6 +194,74 @@ print('Processando modelo chao.obj. Vertice final:',len(vertices_list))
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
 load_texture_from_file(3,'assets/chao/terra.jpg')
 
+
+modelo = load_model_from_file('assets/Tree 02/Tree.obj')
+### inserindo vertices do modelo no vetor de vertices
+print('Processando modelo Tree.obj. Vertice inicial:',len(vertices_list))
+for face in modelo['faces']:
+    for vertice_id in face[0]:
+        vertices_list.append( modelo['vertices'][vertice_id-1] )
+    for texture_id in face[1]:
+        textures_coord_list.append( modelo['texture'][texture_id-1] )
+print('Processando modelo chao.Tree. Vertice final:',len(vertices_list))
+### inserindo coordenadas de textura do modelo no vetor de texturas
+### carregando textura equivalente e definindo um id (buffer): use um id por textura!
+load_texture_from_file(4,'assets/Tree 02/bark_0004.jpg')
+
+
+modelo = load_model_from_file('assets/elsa/elsa.obj')
+### inserindo vertices do modelo no vetor de vertices
+print('Processando modelo elsa.obj. Vertice inicial:',len(vertices_list))
+for face in modelo['faces']:
+    for vertice_id in face[0]:
+        vertices_list.append( modelo['vertices'][vertice_id-1] )
+    for texture_id in face[1]:
+        textures_coord_list.append( modelo['texture'][texture_id-1] )
+print('Processando modelo elsa.obj. Vertice final:',len(vertices_list))
+### inserindo coordenadas de textura do modelo no vetor de texturas
+### carregando textura equivalente e definindo um id (buffer): use um id por textura!
+load_texture_from_file(5,'assets/elsa/elsa.png')
+
+modelo = load_model_from_file('assets/dog/dog.obj')
+### inserindo vertices do modelo no vetor de vertices
+print('Processando modelo dog.obj. Vertice inicial:',len(vertices_list))
+for face in modelo['faces']:
+    for vertice_id in face[0]:
+        vertices_list.append( modelo['vertices'][vertice_id-1] )
+    for texture_id in face[1]:
+        textures_coord_list.append( modelo['texture'][texture_id-1] )
+print('Processando modelo dog.obj. Vertice final:',len(vertices_list))
+### inserindo coordenadas de textura do modelo no vetor de texturas
+### carregando textura equivalente e definindo um id (buffer): use um id por textura!
+load_texture_from_file(6,'assets/dog/Tex_0093_0.tga')
+
+
+modelo = load_model_from_file('assets/gollum/gollum.obj')
+### inserindo vertices do modelo no vetor de vertices
+print('Processando modelo gollum.obj. Vertice inicial:',len(vertices_list))
+for face in modelo['faces']:
+    for vertice_id in face[0]:
+        vertices_list.append( modelo['vertices'][vertice_id-1] )
+    for texture_id in face[1]:
+        textures_coord_list.append( modelo['texture'][texture_id-1] )
+print('Processando modelo gollum.obj. Vertice final:',len(vertices_list))
+### inserindo coordenadas de textura do modelo no vetor de texturas
+### carregando textura equivalente e definindo um id (buffer): use um id por textura!
+load_texture_from_file(7,'assets/gollum/c581eba0.PNG')
+
+modelo = load_model_from_file('assets/ring/ring.obj')
+### inserindo vertices do modelo no vetor de vertices
+print('Processando modelo ring.obj. Vertice inicial:',len(vertices_list))
+for face in modelo['faces']:
+    for vertice_id in face[0]:
+        vertices_list.append( modelo['vertices'][vertice_id-1] )
+    for texture_id in face[1]:
+        textures_coord_list.append( modelo['texture'][texture_id-1] )
+print('Processando modelo ring.obj. Vertice final:',len(vertices_list))
+### inserindo coordenadas de textura do modelo no vetor de texturas
+### carregando textura equivalente e definindo um id (buffer): use um id por textura!
+load_texture_from_file(8,'assets/ring/ring.png')
+
 # Request a buffer slot from GPU
 buffer = glGenBuffers(2)
 
@@ -221,9 +289,6 @@ loc_texture_coord = glGetAttribLocation(program, "texture_coord")
 glEnableVertexAttribArray(loc_texture_coord)
 glVertexAttribPointer(loc_texture_coord, 2, GL_FLOAT, False, stride, offset)
 
-obj_x=-136
-obj_y=-11.5
-obj_z=-3.5
 
 def desenha_casa():
     # aplica a matriz model
@@ -249,19 +314,18 @@ def desenha_casa():
     glDrawArrays(GL_TRIANGLES, 0, 1770) ## renderizando
 
 def desenha_cama():
-    global obj_x,obj_y,obj_z
     # aplica a matriz model
     # rotacao
     angle = 180.0
     r_x = 0.0; r_y = 1.0; r_z = 0.0
     
     # translacao
-    t_x = 0.0; t_y = 0.0; t_z = 0.0
+    t_x = 140.0; t_y = -11.0; t_z = 3.5
     
     # escala
     s_x = 5.0; s_y = 5.0; s_z = 5.0
     
-    mat_model = model(angle, r_x, r_y, r_z, obj_x, obj_y, obj_z, s_x, s_y, s_z)
+    mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     loc_model = glGetUniformLocation(program, "model")
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
@@ -319,9 +383,131 @@ def desenha_chao():
     # desenha o modelo
     glDrawArrays(GL_TRIANGLES, 4596, 102900-4596) ## renderizando
 
+def desenha_Tree():
+    # aplica a matriz model
+    # rotacao
+    global obj_x,obj_y,obj_z
+    angle = 0.0
+    r_x = 0.0; r_y = 0.0; r_z = 1.0
+    
+    # translacao
+    t_x = -101.5; t_y = -12.50; t_z = 43.0
+    
+    # escala
+    s_x = 15.0; s_y = 15.0; s_z = 15.0
+    mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    loc_model = glGetUniformLocation(program, "model")
+    glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
+       
+    #define id da textura do modelo
+    glBindTexture(GL_TEXTURE_2D, 4)
+    
+    
+    # desenha o modelo
+    glDrawArrays(GL_TRIANGLES, 102900, 195714-102900) ## renderizando
 
-cameraPos   = glm.vec3(0.0,  0.0,  1.0)
-cameraFront = glm.vec3(0.0,  0.0, -1.0)
+
+def desenha_elsa():
+    # aplica a matriz model
+    # rotacao
+    angle = -90.0
+    r_x = 0.0; r_y = 1.0; r_z = 0.0
+    
+    # translacao
+    t_x = -25.0; t_y = -12.0; t_z = 152.5
+    
+    # escala
+    s_x = 8.0; s_y = 8.0; s_z = 8.0
+    
+    mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    loc_model = glGetUniformLocation(program, "model")
+    glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
+       
+    #define id da textura do modelo
+    glBindTexture(GL_TEXTURE_2D, 5)
+    
+    
+    # desenha o modelo
+    glDrawArrays(GL_TRIANGLES, 195714, 207645-195714) ## renderizando
+
+
+def desenha_dog():
+    # aplica a matriz model
+    # rotacao
+    angle = -90.0
+    r_x = 0.0; r_y = 1.0; r_z = 0.0
+    
+    # translacao
+    t_x = -34.0; t_y = -11.0; t_z = 132.5
+    
+    # escala
+    s_x = .10; s_y = .10; s_z = .10
+    
+    mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    loc_model = glGetUniformLocation(program, "model")
+    glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
+       
+    #define id da textura do modelo
+    glBindTexture(GL_TEXTURE_2D, 6)
+    
+    
+    # desenha o modelo
+    glDrawArrays(GL_TRIANGLES, 207645, 221943-207645) ## renderizando
+
+
+obj_x=-39
+obj_y=-15.5
+obj_z=132.5
+
+jump = -21.50
+def desenha_gollum():
+    global jump
+    # aplica a matriz model
+    # rotacao
+    angle=90
+    r_x = 0.0; r_y = 1.0; r_z = 0.0
+    
+    # translacao
+    t_x = 6.0; t_y = jump; t_z = -244.0
+    
+    # escala
+    s_x = 15.0; s_y = 15.0; s_z = 15.0
+    mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    loc_model = glGetUniformLocation(program, "model")
+    glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
+       
+    #define id da textura do modelo
+    glBindTexture(GL_TEXTURE_2D, 7)
+    
+    
+    # desenha o modelo
+    glDrawArrays(GL_TRIANGLES, 221943, 231060-221943) ## renderizando
+
+def desenha_ring():
+    # aplica a matriz model
+    # rotacao
+    angle=90
+    r_x = 0.0; r_y = 0.0; r_z = 1.0
+    
+    # translacao
+    t_x = -5.0; t_y = 110; t_z = -26.0
+    
+    # escala
+    s_x = 1.0; s_y = 1.0; s_z = 1.0
+    mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    loc_model = glGetUniformLocation(program, "model")
+    glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
+       
+    #define id da textura do modelo
+    glBindTexture(GL_TEXTURE_2D, 8)
+    
+    
+    # desenha o modelo
+    glDrawArrays(GL_TRIANGLES, 231060, 233364-231060) ## renderizando
+
+
+cameraPos   = glm.vec3(-50.0,  10.0,  200.0)
+cameraFront = glm.vec3(-25.0,  -12.0, 152.0)
 cameraUp    = glm.vec3(0.0,  1.0,  0.0)
 
 polygonal_mode = False
@@ -450,7 +636,7 @@ glfw.set_cursor_pos(window, lastX, lastY)
 glEnable(GL_DEPTH_TEST) ### importante para 3D
    
 
-
+jump_speed =0.35
 while not glfw.window_should_close(window):
 
     glfw.poll_events() 
@@ -471,6 +657,17 @@ while not glfw.window_should_close(window):
     desenha_cama()
     desenha_sky()
     desenha_chao()
+    desenha_Tree()
+    desenha_elsa()
+    desenha_dog()
+    desenha_gollum()
+    desenha_ring()
+    
+    if jump>-14:
+        jump_speed= -0.35
+    if jump <-21.50:
+        jump_speed = 0.35
+    jump+=jump_speed
 
     mat_view = view()
     loc_view = glGetUniformLocation(program, "view")
