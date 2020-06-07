@@ -1,3 +1,24 @@
+"""
+USP  Computação Gráfica - SCC0250 2020/1
+Prof. Ricardo Marcondes Marcacini
+
+Richard Calderan - 3672382
+
+Trabalho 2 
+
+obs:
+Requisito 5- ao invés do terreno ter 2 texturas, eu optei por deixar os outros objetos com mais texturas
+O "gollum", por exemplo tem 4
+
+requisito 9: Eu gostaria de limitar o movimento da camera criando uma função que pegasse a sua posição e comparasse com um
+o vertice mais proximo dela comparando suas coordenadas no eixo Y, mas infelizmente esta abordagem se demostrou ineficiente. Eu poderia 
+ter escolhido um plano ou uma caixa para o terreno externo, seria mais facil...
+
+tecla O e L avança a câmera mais rápido.
+
+"""
+
+
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
@@ -168,6 +189,10 @@ print('Processando modelo cama.obj. Vertice final:',len(vertices_list))
 load_texture_from_file(1,'assets/cama/cama.png')
 
 modelo = load_model_from_file('assets/sky/sky.obj')
+
+#armazena os vertices do chao para vinculá-los a um sistema de colisão
+maxVetexes=modelo['vertices']
+
 ### inserindo vertices do modelo no vetor de vertices
 print('Processando modelo sky.obj. Vertice inicial:',len(vertices_list))
 for face in modelo['faces']:
@@ -180,25 +205,41 @@ print('Processando modelo sky.obj. Vertice final:',len(vertices_list))
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
 load_texture_from_file(2,'assets/sky/sky.jpg')
 
-
+faces_visitadas = []
 modelo = load_model_from_file('assets/chao/chao.obj')
+#armazena os vertices do chao para vinculá-los a um sistema de colisão
+chaoVert=[]  
+
+chaoSize = 451
+off_x=100.0
+off_y=-15.0
+off_z=45.0
+
 ### inserindo vertices do modelo no vetor de vertices
 print('Processando modelo chao.obj. Vertice inicial:',len(vertices_list))
 for face in modelo['faces']:
+    if face[2] not in faces_visitadas:
+        print(face[2], 'face vertice inicial: ',len(vertices_list))
+        faces_visitadas.append(face[2])
     for vertice_id in face[0]:
         vertices_list.append( modelo['vertices'][vertice_id-1] )
+        chaoVert.append(modelo['vertices'][vertice_id-1])
     for texture_id in face[1]:
         textures_coord_list.append( modelo['texture'][texture_id-1] )
 print('Processando modelo chao.obj. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
 load_texture_from_file(3,'assets/chao/terra.jpg')
-
+load_texture_from_file(4,'assets/chao/field.jpg')
 
 modelo = load_model_from_file('assets/Tree 02/Tree.obj')
 ### inserindo vertices do modelo no vetor de vertices
 print('Processando modelo Tree.obj. Vertice inicial:',len(vertices_list))
+faces_visitadas = []
 for face in modelo['faces']:
+    if face[2] not in faces_visitadas:
+        print(face[2], 'face vertice inicial: ',len(vertices_list))
+        faces_visitadas.append(face[2])
     for vertice_id in face[0]:
         vertices_list.append( modelo['vertices'][vertice_id-1] )
     for texture_id in face[1]:
@@ -206,8 +247,8 @@ for face in modelo['faces']:
 print('Processando modelo chao.Tree. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
-load_texture_from_file(4,'assets/Tree 02/bark_0004.jpg')
-
+load_texture_from_file(5,'assets/Tree 02/bark_0004.jpg')
+load_texture_from_file(6,'assets/Tree 02/DB2X2_L01.png')
 
 modelo = load_model_from_file('assets/elsa/elsa.obj')
 ### inserindo vertices do modelo no vetor de vertices
@@ -220,12 +261,16 @@ for face in modelo['faces']:
 print('Processando modelo elsa.obj. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
-load_texture_from_file(5,'assets/elsa/elsa.png')
+load_texture_from_file(7,'assets/elsa/elsa.png')
 
+faces_visitadas = []
 modelo = load_model_from_file('assets/dog/dog.obj')
 ### inserindo vertices do modelo no vetor de vertices
 print('Processando modelo dog.obj. Vertice inicial:',len(vertices_list))
 for face in modelo['faces']:
+    if face[2] not in faces_visitadas:
+        print(face[2], 'face vertice inicial: ',len(vertices_list))
+        faces_visitadas.append(face[2])
     for vertice_id in face[0]:
         vertices_list.append( modelo['vertices'][vertice_id-1] )
     for texture_id in face[1]:
@@ -233,13 +278,19 @@ for face in modelo['faces']:
 print('Processando modelo dog.obj. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
-load_texture_from_file(6,'assets/dog/Tex_0093_0.tga')
+#load_texture_from_file(8,'assets/dog/Tex_0093_0.tga')
+#load_texture_from_file(9,'assets/dog/Tex_0369_0.tga')
+load_texture_from_file(8,'assets/dog/Tex_0552_7.tga')
 
 
+faces_visitadas = []
 modelo = load_model_from_file('assets/gollum/gollum.obj')
 ### inserindo vertices do modelo no vetor de vertices
 print('Processando modelo gollum.obj. Vertice inicial:',len(vertices_list))
 for face in modelo['faces']:
+    if face[2] not in faces_visitadas:
+        print(face[2], 'face vertice inicial: ',len(vertices_list))        
+        faces_visitadas.append(face[2])
     for vertice_id in face[0]:
         vertices_list.append( modelo['vertices'][vertice_id-1] )
     for texture_id in face[1]:
@@ -247,7 +298,10 @@ for face in modelo['faces']:
 print('Processando modelo gollum.obj. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
-load_texture_from_file(7,'assets/gollum/c581eba0.PNG')
+load_texture_from_file(9,'assets/gollum/4e4e0374.PNG')
+load_texture_from_file(10,'assets/gollum/553e267b.PNG')
+load_texture_from_file(11,'assets/gollum/2093f02c.PNG')
+load_texture_from_file(12,'assets/gollum/c581eba0.PNG')
 
 modelo = load_model_from_file('assets/ring/ring.obj')
 ### inserindo vertices do modelo no vetor de vertices
@@ -260,7 +314,7 @@ for face in modelo['faces']:
 print('Processando modelo ring.obj. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
-load_texture_from_file(8,'assets/ring/ring.png')
+load_texture_from_file(13,'assets/ring/ring.png')
 
 # Request a buffer slot from GPU
 buffer = glGenBuffers(2)
@@ -361,25 +415,21 @@ def desenha_sky():
     glDrawArrays(GL_TRIANGLES, 3156, 4596-3156) ## renderizando
 
 def desenha_chao():
+    global chaoSize,off_x,off_y,off_z
     # aplica a matriz model
     # rotacao
     angle = 0.0
-    r_x = 0.0; r_y = 0.0; r_z = 1.0
-    
+    r_x = off_x; r_y = 0.0; r_z = 1.0    
     # translacao
-    t_x = 100.0; t_y = -15.0; t_z = 45.0
-    
+    t_x = 100.0; t_y = off_y; t_z = off_z    
     # escala
-    s_x = 451.0; s_y = 451.0; s_z = 451.0
-    
+    s_x = chaoSize; s_y =chaoSize; s_z = chaoSize    
     mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     loc_model = glGetUniformLocation(program, "model")
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
     #define id da textura do modelo
     glBindTexture(GL_TEXTURE_2D, 3)
-    
-    
     # desenha o modelo
     glDrawArrays(GL_TRIANGLES, 4596, 102900-4596) ## renderizando
 
@@ -399,15 +449,15 @@ def desenha_Tree():
     loc_model = glGetUniformLocation(program, "model")
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
-    #define id da textura do modelo
-    glBindTexture(GL_TEXTURE_2D, 4)
+    #define id da textura do modelo# desenha o modelo
+    glBindTexture(GL_TEXTURE_2D, 5)
+    glDrawArrays(GL_TRIANGLES, 102900, 139344-102900) 
     
-    
-    # desenha o modelo
-    glDrawArrays(GL_TRIANGLES, 102900, 195714-102900) ## renderizando
+    glBindTexture(GL_TEXTURE_2D, 6)
+    glDrawArrays(GL_TRIANGLES, 139344, 195714-139344) 
 
 
-def desenha_elsa():
+def desenha_frozen():
     # aplica a matriz model
     # rotacao
     angle = -90.0
@@ -424,12 +474,16 @@ def desenha_elsa():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
     #define id da textura do modelo
-    glBindTexture(GL_TEXTURE_2D, 5)
+    glBindTexture(GL_TEXTURE_2D, 7)
     
     
     # desenha o modelo
     glDrawArrays(GL_TRIANGLES, 195714, 207645-195714) ## renderizando
 
+
+obj_x=-34
+obj_y=-11.5
+obj_z=132.5
 
 def desenha_dog():
     # aplica a matriz model
@@ -438,7 +492,7 @@ def desenha_dog():
     r_x = 0.0; r_y = 1.0; r_z = 0.0
     
     # translacao
-    t_x = -34.0; t_y = -11.0; t_z = 132.5
+    t_x = 15.0; t_y =-15.0; t_z = 194.0
     
     # escala
     s_x = .10; s_y = .10; s_z = .10
@@ -448,16 +502,24 @@ def desenha_dog():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
     #define id da textura do modelo
-    glBindTexture(GL_TEXTURE_2D, 6)
-    
-    
     # desenha o modelo
-    glDrawArrays(GL_TRIANGLES, 207645, 221943-207645) ## renderizando
+    glBindTexture(GL_TEXTURE_2D, 8)
+    glDrawArrays(GL_TRIANGLES, 207645, 221943-207645) 
+
+#retorna a altura na posição x,z Tentar outra abordagem, esta está ruim
+def getHei(x,z,vertList):
+    global chaoSize, off_x,off_y,off_z
+    tolerancia =0.001
+    #checa qual é o vertice mais proximo, quando achar basta retornar
+    for v in vertList:
+        vx = float(v[0])*chaoSize + off_x
+        vz = float(v[2])*chaoSize + off_z
+        if math.isclose(x,vx,abs_tol=tolerancia):
+            if math.isclose(z,vz,abs_tol=tolerancia):
+                return float(v[1])*chaoSize+off_y
+    print('não achou...')
 
 
-obj_x=-39
-obj_y=-15.5
-obj_z=132.5
 
 jump = -21.50
 def desenha_gollum():
@@ -477,11 +539,14 @@ def desenha_gollum():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
     #define id da textura do modelo
-    glBindTexture(GL_TEXTURE_2D, 7)
-    
-    
-    # desenha o modelo
-    glDrawArrays(GL_TRIANGLES, 221943, 231060-221943) ## renderizando
+    glBindTexture(GL_TEXTURE_2D, 9)
+    glDrawArrays(GL_TRIANGLES, 221943, 226224-221943) ## renderizando
+    glBindTexture(GL_TEXTURE_2D, 10)
+    glDrawArrays(GL_TRIANGLES, 226224, 227010-226224) ## renderizando
+    glBindTexture(GL_TEXTURE_2D, 11)
+    glDrawArrays(GL_TRIANGLES, 227010, 227823-227010) ## renderizando
+    glBindTexture(GL_TEXTURE_2D, 12)
+    glDrawArrays(GL_TRIANGLES, 227823, 231060-227823) ## renderizando
 
 def desenha_ring():
     # aplica a matriz model
@@ -499,14 +564,14 @@ def desenha_ring():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
        
     #define id da textura do modelo
-    glBindTexture(GL_TEXTURE_2D, 8)
+    glBindTexture(GL_TEXTURE_2D, 13)
     
     
     # desenha o modelo
     glDrawArrays(GL_TRIANGLES, 231060, 233364-231060) ## renderizando
 
 
-cameraPos   = glm.vec3(-50.0,  10.0,  200.0)
+cameraPos   = glm.vec3(-50.0,  110.0,  200.0)
 cameraFront = glm.vec3(-25.0,  -12.0, 152.0)
 cameraUp    = glm.vec3(0.0,  1.0,  0.0)
 
@@ -514,8 +579,13 @@ polygonal_mode = False
 
 def key_event(window,key,scancode,action,mods):
     global cameraPos, cameraFront, cameraUp,polygonal_mode,obj_x,obj_y,obj_z
+    """para limitar a camera, a idea era criar uma função (getHei) que retorne a coordenada Y (altura) do chao e do céu
+    e limitar a movimentação da câmera. Porém desta forma fica muito ineficiente e mesmo assim (até a data de entrega)
+    não consegui retornar o valor desejado
+    """
+    #print('camera Y:',cameraPos.y, ' Terrain heigth: ',getHei(cameraPos.x,cameraPos.z,chaoVert))
 
-    #controles de objeto (para fazer alinhamento)
+    #controles de objeto (para descobrir os valores de translação de cada matriz model)
     if key == 266 and (action==1 or action==2): # tecla pageup
         obj_z+=.5
         print('Z: ',obj_z)
@@ -536,6 +606,12 @@ def key_event(window,key,scancode,action,mods):
         print('X: ',obj_x)
 
     cameraSpeed = 3.2
+    #movimentar a camera um pouco mais rapido
+    if key == 79 and (action==1 or action==2): # tecla O sobe rapidao
+        cameraPos += 30 * cameraFront
+    if key == 76 and (action==1 or action==2): # tecla l desce rapidao
+        cameraPos -= 30 * cameraFront
+
     if key == 87 and (action==1 or action==2): # tecla W
         cameraPos += cameraSpeed * cameraFront
     
@@ -547,7 +623,7 @@ def key_event(window,key,scancode,action,mods):
         
     if key == 68 and (action==1 or action==2): # tecla D
         cameraPos += glm.normalize(glm.cross(cameraFront, cameraUp)) * cameraSpeed
-       
+      
     if key == 80 and action==1 and polygonal_mode==True:
         polygonal_mode=False
     else:
@@ -589,6 +665,7 @@ def mouse_event(window, xpos, ypos):
     front.z = math.sin(glm.radians(yaw)) * math.cos(glm.radians(pitch))
     cameraFront = glm.normalize(front)
 
+#teste de scrool do mouse
 def scroll_callback(window, xoffset, yoffset):    
     global cameraPos 
     cameraPos += yoffset
@@ -635,7 +712,7 @@ glfw.set_cursor_pos(window, lastX, lastY)
 
 glEnable(GL_DEPTH_TEST) ### importante para 3D
    
-
+#fazer o gollum ficar pulando
 jump_speed =0.35
 while not glfw.window_should_close(window):
 
@@ -658,11 +735,12 @@ while not glfw.window_should_close(window):
     desenha_sky()
     desenha_chao()
     desenha_Tree()
-    desenha_elsa()
+    desenha_frozen()
     desenha_dog()
     desenha_gollum()
     desenha_ring()
     
+    #gollum fica se mechendo...
     if jump>-14:
         jump_speed= -0.35
     if jump <-21.50:
@@ -675,8 +753,7 @@ while not glfw.window_should_close(window):
 
     mat_projection = projection()
     loc_projection = glGetUniformLocation(program, "projection")
-    glUniformMatrix4fv(loc_projection, 1, GL_FALSE, mat_projection)    
-    
+    glUniformMatrix4fv(loc_projection, 1, GL_FALSE, mat_projection)   
     
 
     
