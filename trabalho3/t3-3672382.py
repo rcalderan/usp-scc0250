@@ -41,7 +41,6 @@ import glm
 import math
 from PIL import Image
 
-
 glfw.init()
 glfw.window_hint(glfw.VISIBLE, glfw.FALSE)
 altura = 1600
@@ -76,22 +75,16 @@ fragment_code = """
         // parametros da iluminacao ambiente e difusa
         uniform vec3 lightPos; // define coordenadas de posicao da luz
         uniform float ka; // coeficiente de reflexao ambiente
-        uniform float kd; // coeficiente de reflexao difusa
-        
-        uniform float i_ka; // coeficiente de reflexao ambiente
-        uniform float i_kd; // coeficiente de reflexao difusa
-        uniform vec3 i_lightPos; // define coordenadas de posicao da luz interna
+        uniform float kd; // coeficiente de reflexao difusa    
         
         // parametros da iluminacao especular
         uniform vec3 viewPos; // define coordenadas com a posicao da camera/observador
         uniform float ks; // coeficiente de reflexao especular
         uniform float ns; // expoente de reflexao especular
-        uniform float i_ks; // coeficiente de reflexao especular
-        uniform float i_ns; // expoente de reflexao especular
         
         // parametro com a cor da(s) fonte(s) de iluminacao
         vec3 lightColor = vec3(1.0, 1.0, 1.0);
-        vec3 i_lightColor = vec3(1.0, 1.0, 1.0);
+        vec3 i_lightColor = vec3(1.0, 1.0, 0.0);
 
         // parametros recebidos do vertex shader
         varying vec2 out_texture; // recebido do vertex shader
@@ -99,25 +92,19 @@ fragment_code = """
         varying vec3 out_fragPos; // recebido do vertex shader
         uniform sampler2D samplerTexture;        
         
-        //uniform bool isInternal;
         
         void main(){
         
             // calculando reflexao ambiente
             vec3 ambient = ka * lightColor ;    
-            
-            vec3 i_ambient =  i_ka * i_lightColor;            
-        
+            //
+
             // calculando reflexao difusa
             vec3 norm = normalize(out_normal); // normaliza vetores perpendiculares
 
             vec3 lightDir = normalize(lightPos - out_fragPos); // direcao da luz
             float diff = max(dot(norm, lightDir), 0.0); // verifica limite angular (entre 0 e 90)
             vec3 diffuse = kd * diff * lightColor; // iluminacao difusa
-
-            vec3 i_lightDir = normalize(i_lightPos - out_fragPos); // direcao da luz
-            float i_dif = max(dot(norm, i_lightDir), 0.0); // verifica limite angular (entre 0 e 90) interna
-            vec3 i_diffuse = i_kd * i_dif * i_lightColor; // iluminacao difusa
             
             // calculando reflexao especular
             vec3 viewDir = normalize(viewPos - out_fragPos); // direcao do observador/camera
@@ -125,19 +112,14 @@ fragment_code = """
             float spec = pow(max(dot(viewDir, reflectDir), 0.0), ns);
             vec3 specular = ks * spec  * lightColor; 
 
-            //para especular luz interna
-            vec3 i_reflectDir = reflect(-i_lightDir, norm); // direcao da reflexao
-            float i_spec = pow(max(dot(viewDir, i_reflectDir), 0.0), i_ns);
-            vec3 i_specular = i_ks * i_spec  * i_lightColor; 
-
             // aplicando o modelo de iluminacao
             vec4 texture = texture2D(samplerTexture, out_texture);
-            vec4 result = vec4((ambient+i_ambient + diffuse+i_diffuse + specular+i_specular),1.0) *  texture; // aplica iluminacao
+            vec4 result = vec4((ambient+ diffuse + specular),1.0) *  texture; // aplica iluminacao
             
-           
             gl_FragColor = result;       
         }
     """
+
 # Request a program and shader slots from GPU
 program  = glCreateProgram()
 vertex   = glCreateShader(GL_VERTEX_SHADER)
@@ -449,11 +431,14 @@ loc_texture_coord = glGetAttribLocation(program, "texture_coord")
 glEnableVertexAttribArray(loc_texture_coord)
 glVertexAttribPointer(loc_texture_coord, 2, GL_FLOAT, False, stride, offset)
 
-kd=1
-ka=0.5
+
+ka = 0.3 # coeficiente de reflexao ambiente do modelo
+kd = 0.3 # coeficiente de reflexao difusa do modelo
+ks = .3 # coeficiente de reflexao especular do modelo
+isInside=False
 
 def desenha_casa():
-    global ka,kd
+    global isInside
     # aplica a matriz model
     # rotacao
     angle = 90.0
@@ -471,31 +456,27 @@ def desenha_casa():
     
 
     #### define parametros de ilumincao do modelo
-    ka = 0.3 # coeficiente de reflexao ambiente do modelo
-    kd = 0.3 # coeficiente de reflexao difusa do modelo
-    ks = 0.05 # coeficiente de reflexao especular do modelo
-    ns = 2.0 # expoente de reflexao especular
+    if isInside:
+        ka = 0.3 # coeficiente de reflexao ambiente do modelo
+        kd = 0.001 # coeficiente de reflexao difusa do modelo
+    else:
+        ka= .2
+        kd= .8 
+    ks = 0.0005 # coeficiente de reflexao especular do modelo
+    ns = 0.001 # expoente de reflexao especular
     
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ka") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
     
     
     loc_kd = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, kd) ### envia kd pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_kd") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu   
+    glUniform1f(loc_kd, kd) ### envia kd pra gpu    
     
     loc_ks = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ks, ks) ### envia ns pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_ks") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu        
+    glUniform1f(loc_ks, ks) ### envia ns pra gpu        
     
     loc_ns = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ns na GPU
     glUniform1f(loc_ns, ns) ### envia ns pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ns") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
 
     #define id da textura do modelo
     glBindTexture(GL_TEXTURE_2D, 0)
@@ -505,6 +486,7 @@ def desenha_casa():
     glDrawArrays(GL_TRIANGLES, 0, 1770) ## renderizando
 
 def desenha_cama():
+    global isInside
     # aplica a matriz model
     # rotacao
     angle = 180.0
@@ -522,16 +504,20 @@ def desenha_cama():
        
     
     #### define parametros de ilumincao do modelo
-    ka = 0.3 # coeficiente de reflexao ambiente do modelo
-    kd = 0.3 # coeficiente de reflexao difusa do modelo
-    ks = 0.1 # coeficiente de reflexao especular do modelo
-    ns = 2.0 # expoente de reflexao especular
+    if isInside:
+        ka = 0.6 # coeficiente de reflexao ambiente do modelo
+        kd = 0.5 # coeficiente de reflexao difusa do modelo
+    else:
+        ka=.0002
+        kd=.001
+    ks = 0.05 # coeficiente de reflexao especular do modelo
+    ns = 0.001 # expoente de reflexao especular
     
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
     
     loc_kd = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, kd) ### envia kd pra gpu    
+    glUniform1f(loc_kd, kd) ### envia kd pra gpu   
     
     loc_ks = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ks na GPU
     glUniform1f(loc_ks, ks) ### envia ks pra gpu        
@@ -566,32 +552,24 @@ def desenha_sky():
     
     
     #### define parametros de ilumincao do modelo
-    ka = 0.3 # coeficiente de reflexao ambiente do modelo
-    kd = 0.3 # coeficiente de reflexao difusa do modelo
+    ka = 0.2 # coeficiente de reflexao ambiente do modelo
+    kd = 0.7 # coeficiente de reflexao difusa do modelo
     ks = 0.1 # coeficiente de reflexao especular do modelo
-    ns = 2.0 # expoente de reflexao especular
+    ns = 0.01 # expoente de reflexao especular
     
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ka") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
     
     
     loc_kd = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, kd) ### envia kd pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_kd") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu   
+    glUniform1f(loc_kd, kd) ### envia kd pra gpu     
     
     loc_ks = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ks, ks) ### envia ns pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_ks") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu        
+    glUniform1f(loc_ks, ks) ### envia ns pra gpu         
     
     loc_ns = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ns na GPU
     glUniform1f(loc_ns, ns) ### envia ns pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ns") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
-    
+ 
     # desenha o modelo
     glDrawArrays(GL_TRIANGLES, 3156, 4596-3156) ## renderizando
 
@@ -609,31 +587,23 @@ def desenha_chao():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
     
     #### define parametros de ilumincao do modelo
-    ka = 0.7 # coeficiente de reflexao ambiente do modelo
+    ka = 0.3 # coeficiente de reflexao ambiente do modelo
     kd = 0.6 # coeficiente de reflexao difusa do modelo
+    i_kd = 0.1 # coeficiente de reflexao difusa do modelo
     ks = 0.1 # coeficiente de reflexao especular do modelo
-    ns = 2064.0 # expoente de reflexao especular
-    
+    ns = 1.0 # expoente de reflexao especular
+
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ka") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
-    
     
     loc_kd = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel kd na GPU
     glUniform1f(loc_kd, kd) ### envia kd pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_kd") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu   
     
     loc_ks = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ks, ks) ### envia ns pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_ks") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu        
+    glUniform1f(loc_ks, ks) ### envia ns pra gpu        
     
     loc_ns = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ns na GPU
     glUniform1f(loc_ns, ns) ### envia ns pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ns") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
 
 
     #define id da textura do modelo
@@ -659,27 +629,19 @@ def desenha_Tree():
 
     
     #### define parametros de ilumincao do modelo
-    ka = 0.6 # coeficiente de reflexao ambiente do modelo
-    kd = 0.75 # coeficiente de reflexao difusa do modelo
+    ka = 0.45 # coeficiente de reflexao ambiente do modelo
+    kd = 0.55 # coeficiente de reflexao difusa do modelo
     ks = 0.2 # coeficiente de reflexao especular do modelo
     ns = 4.0 # expoente de reflexao especular
     
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ka") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
     loc_kd = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, kd) ### envia kd pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_kd") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu   
+    glUniform1f(loc_kd, kd) ### envia kd pra gpu    
     loc_ks = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ks, ks) ### envia ns pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_ks") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu    
+    glUniform1f(loc_ks, ks) ### envia ns pra gpu   
     loc_ns = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ns na GPU
     glUniform1f(loc_ns, ns) ### envia ns pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ns") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
 
     #define id da textura do modelo# desenha o modelo
     glBindTexture(GL_TEXTURE_2D, 5)
@@ -688,14 +650,8 @@ def desenha_Tree():
     glBindTexture(GL_TEXTURE_2D, 6)
     glDrawArrays(GL_TRIANGLES, 139344, 195714-139344) 
 
-ka = 0.3 # coeficiente de reflexao ambiente do modelo
-kd = 0.3 # coeficiente de reflexao difusa do modelo
-ks = .3 # coeficiente de reflexao especular do modelo
-i_ka = 0.5
-i_kd= .3
-i_ks= .3
 def desenha_frozen():
-    #global i_ka,i_kd,i_ks,ka,kd,ks
+    global i_kd,ka,kd,ks,isInside
     # aplica a matriz model
     # rotacao
     angle = -90.0
@@ -710,46 +666,32 @@ def desenha_frozen():
     mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     loc_model = glGetUniformLocation(program, "model")
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
-
-    
-    #### define parametros de ilumincao do modelo
-    ka = 0.1 # coeficiente de reflexao ambiente do modelo
-    kd = 0.1 # coeficiente de reflexao difusa do modelo
+    if isInside:
+        #### define parametros de ilumincao do modelo
+        ka = 0.71 # coeficiente de reflexao ambiente do modelo
+        kd = 0.39 # coeficiente de reflexao difusa do modelo
+    else:
+        ka=0.001
+        kd = 0.001 # coeficiente de reflexao difusa do modelo
     ks = .001 # coeficiente de reflexao especular do modelo
-    ns = .10 # expoente de reflexao especular
+    ns = .010 # expoente de reflexao especular
     
-    i_ka = 1
-    i_kd= 1
-    i_ks= .3
-    i_ns=1
+    #i_kd= 0.001
 
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
     
-    loc_ka = glGetUniformLocation(program, "i_ka") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, i_ka) ### envia ka pra gpu
-    
     loc_kd = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, kd) ### envia kd pra gpu  
-    loc_kd = glGetUniformLocation(program, "i_kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, i_kd) ### envia kd pra gpu   
+    glUniform1f(loc_kd, kd) ### envia kd pra gpu   
     
     loc_ks = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ks, ks) ### envia ns pra gpu   
-    loc_ks = glGetUniformLocation(program, "i_ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ks, i_ks) ### envia ns pra gpu        
+    glUniform1f(loc_ks, ks) ### envia ns pra gpu          
     
     loc_ns = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ns na GPU
     glUniform1f(loc_ns, ns) ### envia ns pra gpu
 
-    loc_ns = glGetUniformLocation(program, "i_ns") # recuperando localizacao da variavel ns na GPU
-    glUniform1f(loc_ns, i_ns) ### envia ns pra gpu
-
     #define id da textura do modelo
     glBindTexture(GL_TEXTURE_2D, 7)
-    
-
-    
     # desenha o modelo
     glDrawArrays(GL_TRIANGLES, 195714, 207645-195714) ## renderizando
 
@@ -757,7 +699,8 @@ def desenha_frozen():
 obj_x=23
 obj_y=168
 obj_z=-41
-
+#acho q deu certo. Agora é só ajustar os coeficientes
+# sim. o modelo do anel não parece estar mostrando o specular. mas ahco q
 def desenha_dog():
     # aplica a matriz model
     # rotacao
@@ -775,27 +718,19 @@ def desenha_dog():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
     
     #### define parametros de ilumincao do modelo
-    ka = 0.5 # coeficiente de reflexao ambiente do modelo
-    kd = 0.7 # coeficiente de reflexao difusa do modelo
+    ka = 0.2 # coeficiente de reflexao ambiente do modelo
+    kd = 0.8 # coeficiente de reflexao difusa do modelo
     ks = 0.01 # coeficiente de reflexao especular do modelo
     ns = 1.0 # expoente de reflexao especular
 
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ka") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
     loc_kd = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, kd) ### envia kd pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_kd") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu   
+    glUniform1f(loc_kd, kd) ### envia kd pra gpu    
     loc_ka = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ka, ks) ### envia ns pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_ks") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu    
+    glUniform1f(loc_ka, ks) ### envia ns pra gpu    
     loc_ns = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ns na GPU
     glUniform1f(loc_ns, ns) ### envia ns pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ns") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
 
     #define id da textura do modelo
     # desenha o modelo
@@ -822,27 +757,19 @@ def desenha_gollum():
 
     
     #### define parametros de ilumincao do modelo
-    ka = 0.3 # coeficiente de reflexao ambiente do modelo
+    ka = 0.2 # coeficiente de reflexao ambiente do modelo
     kd = 0.8 # coeficiente de reflexao difusa do modelo
     ks = 0.2 # coeficiente de reflexao especular do modelo
     ns = 4.0 # expoente de reflexao especular
     
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ka") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
     loc_kd = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, kd) ### envia kd pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_kd") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu   
+    glUniform1f(loc_kd, kd) ### envia kd pra gpu     
     loc_ks = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ks, ks) ### envia ns pra gpu  
-    loc_ka = glGetUniformLocation(program, "i_ks") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu    
+    glUniform1f(loc_ks, ks) ### envia ns pra gpu    
     loc_ns = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ns na GPU
     glUniform1f(loc_ns, ns) ### envia ns pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ns") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, 0) ### envia ka pra gpu
 
     #define id da textura do modelo
     glBindTexture(GL_TEXTURE_2D, 9)
@@ -872,33 +799,34 @@ def desenha_ring():
     #define id da textura do modelo
     glBindTexture(GL_TEXTURE_2D, 13)
     
-    i_ka = 0.3 # coeficiente de reflexao ambiente do modelo
-    i_kd = 0.3 # coeficiente de reflexao difusa do modelo
-    i_ks = 1.0 # coeficiente de reflexao especular do modelo
-    i_ns = 128.0 # expoente de reflexao especular
+    ka = 0.6 # coeficiente de reflexao ambiente do modelo
+    kd = 0.4 # coeficiente de reflexao difusa do modelo
+
+    ks = .70 # coeficiente de reflexao especular do modelo
+    ns = 256.0 # expoente de reflexao especular
+    #acho que é só entender direito como funciona isso kkk
+    #
 
     
-    loc_ka = glGetUniformLocation(program, "i_ka") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, i_ka) ### envia ka pra gpu
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
-    #glUniform1f(loc_ka, 0) ### envia ka pra gpu
-    loc_kd = glGetUniformLocation(program, "i_kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, i_kd) ### envia kd pra gpu  
+    glUniform1f(loc_ka, ka) ### envia ka pra gpu
     loc_ka = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel ka na GPU
-    #glUniform1f(loc_ka, 0) ### envia ka pra gpu   
-    loc_ks = glGetUniformLocation(program, "i_ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ks, i_ks) ### envia ns pra gpu  
+    glUniform1f(loc_ka, kd) ### envia ka pra gpu     
     loc_ka = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ka na GPU
-    #glUniform1f(loc_ka, 0) ### envia ka pra gpu    
-    loc_ns = glGetUniformLocation(program, "i_ns") # recuperando localizacao da variavel ns na GPU
-    glUniform1f(loc_ns, i_ns) ### envia ns pra gpu
+    glUniform1f(loc_ka,ks) ### envia ka pra gpu   
     loc_ka = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ka na GPU
-    #glUniform1f(loc_ka, 0) ### envia ka pra gpu
+    glUniform1f(loc_ka, ns) ### envia ka pra gpu
     
     # desenha o modelo
     glDrawArrays(GL_TRIANGLES, 231060, 233364-231060) ## renderizando
 
+
+cameraPos   = glm.vec3(-50.0,  110.0,  200.0)
+cameraFront = glm.vec3(-25.0,  -12.0, 152.0)
+cameraUp    = glm.vec3(0.0,  1.0,  0.0)
+
 def desenha_sun(ang):
+    global isInside
     # aplica a matriz model
     # rotacao
     angle=90
@@ -933,14 +861,17 @@ def desenha_sun(ang):
     loc_ns = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ns na GPU
     glUniform1f(loc_ns, ns) ### envia ns pra gpu            
     
-    loc_light_pos = glGetUniformLocation(program, "lightPos") # recuperando localizacao da variavel lightPos na GPU
-    glUniform3f(loc_light_pos, t_x, t_y, t_z) ### posicao da fonte de luz
+    if not isInside:
+        loc_light_pos = glGetUniformLocation(program, "lightPos") # recuperando localizacao da variavel lightPos na GPU
+        glUniform3f(loc_light_pos, t_x, t_y, t_z) ### posicao da fonte de luz
 
 
     glBindTexture(GL_TEXTURE_2D, 14)    
     glDrawArrays(GL_TRIANGLES, 233364, 236244-233364) ## renderizando
 
+
 def desenha_lampada():
+    global isInside
     # aplica a matriz model
     # rotacao
     angle=90
@@ -962,79 +893,65 @@ def desenha_lampada():
     ks = 1 # coeficiente de reflexao especular do modelo
     ns = 1000.0 # expoente de reflexao especular
 
-    #interna
-    i_ka=1
-    i_kd=1
-    i_ks=1
-    i_ns=1
 
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
-    loc_ka = glGetUniformLocation(program, "i_ka") # recuperando localizacao da variavel ka na GPU
-    glUniform1f(loc_ka, i_ka) ### envia ka pra gpu
     
     loc_kd = glGetUniformLocation(program, "kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, kd) ### envia kd pra gpu  
-    loc_kd = glGetUniformLocation(program, "i_kd") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, i_kd) ### envia kd pra gpu   
+    glUniform1f(loc_kd, kd) ### envia kd pra gpu   
     
     loc_ks = glGetUniformLocation(program, "ks") # recuperando localizacao da variavel ks na GPU
-    glUniform1f(loc_ks, ks) ### envia ns pra gpu 
-    loc_kd = glGetUniformLocation(program, "i_ks") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, i_ks) ### envia kd pra gpu         
+    glUniform1f(loc_ks, ks) ### envia ns pra gpu         
     
     loc_ns = glGetUniformLocation(program, "ns") # recuperando localizacao da variavel ns na GPU
-    glUniform1f(loc_ns, ns) ### envia ns pra gpu 
-    loc_kd = glGetUniformLocation(program, "i_ns") # recuperando localizacao da variavel kd na GPU
-    glUniform1f(loc_kd, i_ns) ### envia kd pra gpu           
+    glUniform1f(loc_ns, ns) ### envia ns pra gpu           
     
-    loc_light_pos = glGetUniformLocation(program, "i_lightPos") # recuperando localizacao da variavel lightPos na GPU
-    glUniform3f(loc_light_pos, t_x, t_y, t_z) ### posicao da fonte de luz
-
+    if isInside:        
+        loc_light_pos = glGetUniformLocation(program, "lightPos") # recuperando localizacao da variavel lightPos na GPU
+        glUniform3f(loc_light_pos, t_x, t_y, t_z) ### posicao da fonte de luz
 
     glBindTexture(GL_TEXTURE_2D, 14)    
     glDrawArrays(GL_TRIANGLES, 236244, 239124-236244) ## renderizando
 
 
-cameraPos   = glm.vec3(-50.0,  110.0,  200.0)
-cameraFront = glm.vec3(-25.0,  -12.0, 152.0)
-cameraUp    = glm.vec3(0.0,  1.0,  0.0)
 
 polygonal_mode = False
 
+#check if the observer is inside house
+def checkPosition(cameraPos):
+    global isInside
+    if cameraPos[0]>=-195 and cameraPos[0]<= 107 and cameraPos[1]>=-10 and cameraPos[1]<= 19 and  cameraPos[2]>=-52 and cameraPos[2]<= -1.5:
+        isInside= True
+    else:
+        isInside=False
 def key_event(window,key,scancode,action,mods):
-    global cameraPos, cameraFront, cameraUp,polygonal_mode,obj_x,obj_y,obj_z,kd,ka,ks,i_ka,i_ks,i_kd,i_ks
-    """para limitar a camera, a idea era criar uma função (getHei) que retorne a coordenada Y (altura) do chao e do céu
-    e limitar a movimentação da câmera. Porém desta forma fica muito ineficiente e mesmo assim (até a data de entrega)
-    não consegui retornar o valor desejado
+    global cameraPos, cameraFront, cameraUp,polygonal_mode,obj_x,obj_y,obj_z,kd,ka,ks,ks
     """
-    #print('camera Y:',cameraPos.y, ' Terrain heigth: ',getHei(cameraPos.x,cameraPos.z,chaoVert))
-
     #controles de objeto (para descobrir os valores de translação de cada matriz model)
     if key == 266 and (action==1 or action==2): # tecla pageup
-        obj_z+=.5
-        print('Z: ',obj_z)
+        i_kd+=.15
+        print('i_kd: ',i_kd)
     if key == 267 and (action==1 or action==2): # tecla pagedown
-        obj_z-=.5
-        print('Z: ',obj_z)
+        i_kd-=.15
+        print('i_kd: ',i_kd)"""
     if key == 268 and (action==1 or action==2): # tecla home
         #obj_y+=.5
-        ka+=0.1
+        ka+=0.15
         print("ka ",ka)
         #print('Y: ',obj_y)
     if key == 269 and (action==1 or action==2): # tecla end
         #obj_y-=.5
-        ka-=0.1
+        ka-=0.15
         print("ka ",ka)
         #print('Y: ',obj_y)
     if key == 260 and (action==1 or action==2): # tecla insert
         #obj_x+=.5
-        kd+=0.1
+        kd+=0.15
         print("kd ",kd)
         #print('X: ',obj_x)
     if key == 261 and (action==1 or action==2): # tecla delete
         #obj_x-=.5
-        kd-=0.1
+        kd-=0.15
         print("kd ",kd)
         #print('X: ',obj_x)
     if key == 263 and (action==1 or action==2): # tecla up
@@ -1050,15 +967,19 @@ def key_event(window,key,scancode,action,mods):
 
     if key == 87 and (action==1 or action==2): # tecla W
         cameraPos += cameraSpeed * cameraFront
+        #print(cameraPos)
     
     if key == 83 and (action==1 or action==2): # tecla S
         cameraPos -= cameraSpeed * cameraFront
+        #print(cameraPos)
     
     if key == 65 and (action==1 or action==2): # tecla A
         cameraPos -= glm.normalize(glm.cross(cameraFront, cameraUp)) * cameraSpeed
+        #print(cameraPos)
         
     if key == 68 and (action==1 or action==2): # tecla D
         cameraPos += glm.normalize(glm.cross(cameraFront, cameraUp)) * cameraSpeed
+        #print(cameraPos)
     
 
     if key == 76 and (action==1 or action==2): # tecla l 
@@ -1071,6 +992,7 @@ def key_event(window,key,scancode,action,mods):
         ka+=0.05
     if key == 80 and (action==1 or action==2): # tecla p
         ka-=0.05
+    checkPosition(cameraPos)
         
 firstMouse = True
 yaw = -90.0 

@@ -1,3 +1,9 @@
+"""
+Richard Calderan  - 3672382
+Exercicio alua 11 parte 2
+
+"""
+
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders

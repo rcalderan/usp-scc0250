@@ -230,7 +230,7 @@ print('Processando modelo chao.obj. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
 load_texture_from_file(3,'assets/chao/terra.jpg')
-load_texture_from_file(4,'assets/chao/field.jpg')
+#load_texture_from_file(4,'assets/chao/field.jpg')
 
 modelo = load_model_from_file('assets/Tree 02/Tree.obj')
 ### inserindo vertices do modelo no vetor de vertices

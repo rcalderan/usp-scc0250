@@ -1,3 +1,10 @@
+"""
+Richard Calderan  - 3672382
+Exercicio alua 11 parte 3
+
+"""
+
+
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
@@ -143,13 +150,13 @@ textures_coord_list = []
 
 modelo = load_model_from_file('caixa/caixa.obj')
 ### inserindo vertices do modelo no vetor de vertices
-print('Processando modelo cube.obj. Vertice inicial:',len(vertices_list))
+print('Processando modelo caixa.obj. Vertice inicial:',len(vertices_list))
 for face in modelo['faces']:
     for vertice_id in face[0]:
         vertices_list.append( modelo['vertices'][vertice_id-1] )
     for texture_id in face[1]:
         textures_coord_list.append( modelo['texture'][texture_id-1] )
-print('Processando modelo cube.obj. Vertice final:',len(vertices_list))
+print('Processando modelo caixa.obj. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
 load_texture_from_file(0,'caixa/caixa.jpg')
@@ -181,20 +188,27 @@ print('Processando modelo sword.obj. Vertice final:',len(vertices_list))
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
 load_texture_from_file(2,'sword/Textures/Sting_Base_Color.png')
 
-modelo = load_model_from_file('tree/tree2.obj')
+
+
+faces_visitadas = []
+modelo = load_model_from_file('gollum/gollum.obj')
 ### inserindo vertices do modelo no vetor de vertices
-print('Processando modelo tree.obj. Vertice inicial:',len(vertices_list))
+print('Processando modelo gollum.obj. Vertice inicial:',len(vertices_list))
 for face in modelo['faces']:
+    if face[2] not in faces_visitadas:
+        print(face[2], 'face vertice inicial: ',len(vertices_list))        
+        faces_visitadas.append(face[2])
     for vertice_id in face[0]:
         vertices_list.append( modelo['vertices'][vertice_id-1] )
     for texture_id in face[1]:
         textures_coord_list.append( modelo['texture'][texture_id-1] )
-print('Processando modelo tree.obj. Vertice final:',len(vertices_list))
-
+print('Processando modelo gollum.obj. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
-load_texture_from_file(3,'tree/DB2X2_L01.png')
-load_texture_from_file(4,'tree/bark_0004.jpg')
+load_texture_from_file(5,'gollum/4e4e0374.PNG')
+load_texture_from_file(6,'gollum/553e267b.PNG')
+load_texture_from_file(7,'gollum/2093f02c.PNG')
+load_texture_from_file(8,'gollum/c581eba0.PNG')
 
 
 # Request a buffer slot from GPU
@@ -271,17 +285,18 @@ def desenha_terreno():
     # desenha o modelo
     glDrawArrays(GL_TRIANGLES, 36, 42-36) ## renderizando
 
-def desenha_espada():      
-    # aplica a matriz model    
+
+def desenha_espada():
+    # aplica a matriz model
     # rotacao
     angle = 0.0
     r_x = 0.0; r_y = 0.0; r_z = 1.0
     
     # translacao
-    t_x = 0.0; t_y = 0.0; t_z = 0.0
+    t_x = 1.0; t_y = 0.0; t_z = 5.0
     
     # escala
-    s_x = .2; s_y = .2; s_z = .2
+    s_x = .40; s_y = .40; s_z = .40
     
     mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     loc_model = glGetUniformLocation(program, "model")
@@ -292,8 +307,34 @@ def desenha_espada():
     
     
     # desenha o modelo
-    glDrawArrays(GL_TRIANGLES , 42, 7830-42) ## renderizando
+    glDrawArrays(GL_TRIANGLES, 42, 7830-42) ## renderizando
 
+
+#adicionando modelo com mais texturas
+def desenha_gollum():
+    # aplica a matriz model
+    # rotacao
+    angle=0
+    r_x = 0.0; r_y = 1.0; r_z = 0.0
+    
+    # translacao
+    t_x = 0.0; t_y = -3.0; t_z = -0.0
+    
+    # escala
+    s_x = 5.0; s_y = 5.0; s_z = 5.0
+    mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
+    loc_model = glGetUniformLocation(program, "model")
+    glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
+       
+    #define id da textura do modelo
+    glBindTexture(GL_TEXTURE_2D, 5)
+    glDrawArrays(GL_TRIANGLES, 100644, 104925-100644) ## renderizando
+    glBindTexture(GL_TEXTURE_2D, 6)
+    glDrawArrays(GL_TRIANGLES, 104925, 105711-104925) ## renderizando
+    glBindTexture(GL_TEXTURE_2D, 7)
+    glDrawArrays(GL_TRIANGLES, 105711, 106524-105711) ## renderizando
+    glBindTexture(GL_TEXTURE_2D, 8)
+    glDrawArrays(GL_TRIANGLES, 106524, 109761-106524) ## renderizando
 
 
 cameraPos   = glm.vec3(0.0,  0.0,  1.0)
@@ -426,7 +467,7 @@ while not glfw.window_should_close(window):
     desenha_caixa()   
     desenha_terreno()
     desenha_espada()
-  
+    desenha_gollum()
 
     
     mat_view = view()

@@ -509,11 +509,13 @@ def desenha_dog():
 #retorna a altura na posição x,z Tentar outra abordagem, esta está ruim
 def getHei(x,z,vertList):
     global chaoSize, off_x,off_y,off_z
-    tolerancia =0.001
+    tolerancia =2.
     #checa qual é o vertice mais proximo, quando achar basta retornar
     for v in vertList:
         vx = float(v[0])*chaoSize + off_x
         vz = float(v[2])*chaoSize + off_z
+        #print(x,"-> ",float(v[0]))
+        
         if math.isclose(x,vx,abs_tol=tolerancia):
             if math.isclose(z,vz,abs_tol=tolerancia):
                 return float(v[1])*chaoSize+off_y
