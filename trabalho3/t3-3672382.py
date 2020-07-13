@@ -6,28 +6,38 @@ Richard Calderan - 3672382
 
 Trabalho 3 
 
-obs:
+Requisitos:
 1. O cenário deve conter um ambiente interno e externo. O ambiente interno deve
 conter pelo menos três modelos. O ambiente externo deve conter pelo menos três
 modelos. Pelo menos 1 modelo deve ser animado.
+ok
 2. Adicionar uma fonte de luz no ambiente externo. A fonte de luz pode ser um sol, lua
 ou qualquer objeto.
+ok
 3. A fonte de luz do ambiente externo deve se movimentar ao longo do cenário. O
 movimento da fonte de luz do ambiente externo deve impactar a iluminação dos
 modelos.
+ok (sol)
 4. Cada modelo no ambiente externo deve ter seus próprios parâmetros de iluminação,
 ka (ambiente), kd (difusa) e ks (especular).
+ok
 5. Adicionar uma fonte de luz no ambiente interno. A fonte de luz é fixa, podendo ser
 uma lâmpada, um abajur, etc.
+ok (lâmpada)
 6. Faça com que os modelos no ambiente interno sejam mais afetados pela luz do
 ambiente interno do que pela luz do ambiente externo.
+ok
 7. Cada modelo no ambiente interno deve ter seus próprios parâmetros de iluminação,
 ka (ambiente), kd (difusa) e ks (especular).
+ok
 8. Faça com que a tecla L desligue e ligue a luz do ambiente interno, tornando o
 ambiente mais escuro, sendo iluminado apenas por uma luz ambiente fraca.
+ok
 9. Faça com que as teclas U e P aumentem e reduzam a intensidade da luz ambiente.
+ok
 10. Escolha um dos seus modelos para aplicar um efeito (bem visível) de reflexão
 especular.
+ok Anel. É melhor visualizado com a luz externa, posicionando a câmera do lado de fora de frente pra porta. 
 
 
 """
@@ -379,13 +389,13 @@ load_texture_from_file(13,'assets/ring/ring.png')
 
 modelo = load_model_from_file('assets/sun/esfera.obj')
 ### inserindo vertices do modelo no vetor de vertices
-print('Processando modelo esfera.obj. Vertice inicial:',len(vertices_list))
+print('Processando modelo luz externa. Vertice inicial:',len(vertices_list))
 for face in modelo['faces']:
     for vertice_id in face[0]:
         vertices_list.append( modelo['vertices'][vertice_id-1] )
     for texture_id in face[1]:
         textures_coord_list.append( modelo['texture'][texture_id-1] )
-print('Processando modelo esfera.obj. Vertice final:',len(vertices_list))
+print('Processando modelo luz externa. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
 load_texture_from_file(14,'assets/sun/luz.png')
@@ -393,16 +403,17 @@ load_texture_from_file(14,'assets/sun/luz.png')
 
 modelo = load_model_from_file('assets/sun/esfera.obj')
 ### inserindo vertices do modelo no vetor de vertices
-print('Processando modelo esfera.obj. Vertice inicial:',len(vertices_list))
+print('Processando modelo luz interna. Vertice inicial:',len(vertices_list))
 for face in modelo['faces']:
     for vertice_id in face[0]:
         vertices_list.append( modelo['vertices'][vertice_id-1] )
     for texture_id in face[1]:
         textures_coord_list.append( modelo['texture'][texture_id-1] )
-print('Processando modelo esfera.obj. Vertice final:',len(vertices_list))
+print('Processando modelo luz interna. Vertice final:',len(vertices_list))
 ### inserindo coordenadas de textura do modelo no vetor de texturas
 ### carregando textura equivalente e definindo um id (buffer): use um id por textura!
 load_texture_from_file(14,'assets/sun/luz.png')
+
 
 # Request a buffer slot from GPU
 buffer = glGenBuffers(2)
@@ -431,14 +442,14 @@ loc_texture_coord = glGetAttribLocation(program, "texture_coord")
 glEnableVertexAttribArray(loc_texture_coord)
 glVertexAttribPointer(loc_texture_coord, 2, GL_FLOAT, False, stride, offset)
 
-
+#globais
+ka_offset=0
 ka = 0.3 # coeficiente de reflexao ambiente do modelo
-kd = 0.3 # coeficiente de reflexao difusa do modelo
-ks = .3 # coeficiente de reflexao especular do modelo
 isInside=False
+turnOn = True
 
 def desenha_casa():
-    global isInside
+    global isInside, turnOn,ka_offset
     # aplica a matriz model
     # rotacao
     angle = 90.0
@@ -457,13 +468,15 @@ def desenha_casa():
 
     #### define parametros de ilumincao do modelo
     if isInside:
-        ka = 0.3 # coeficiente de reflexao ambiente do modelo
-        kd = 0.001 # coeficiente de reflexao difusa do modelo
+        ka = 0.3+ka_offset # coeficiente de reflexao ambiente do modelo
+        kd = 0.8 # coeficiente de reflexao difusa do modelo
+        if not turnOn:
+            kd = 0.0 
     else:
-        ka= .2
-        kd= .8 
+        ka= .1+ka_offset
+        kd= .6 
     ks = 0.0005 # coeficiente de reflexao especular do modelo
-    ns = 0.001 # expoente de reflexao especular
+    ns = 1024.0 # expoente de reflexao especular
     
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
@@ -486,7 +499,8 @@ def desenha_casa():
     glDrawArrays(GL_TRIANGLES, 0, 1770) ## renderizando
 
 def desenha_cama():
-    global isInside
+    global isInside,turnOn,ka_offset
+
     # aplica a matriz model
     # rotacao
     angle = 180.0
@@ -504,11 +518,12 @@ def desenha_cama():
        
     
     #### define parametros de ilumincao do modelo
-    if isInside:
-        ka = 0.6 # coeficiente de reflexao ambiente do modelo
-        kd = 0.5 # coeficiente de reflexao difusa do modelo
+    ka = ka_offset+0.3 # coeficiente de reflexao ambiente do modelo
+    if isInside:        
+        kd = 0.5 # coeficiente de reflexao difusa do modelo        
+        if not turnOn:
+            kd = 0.0 
     else:
-        ka=.0002
         kd=.001
     ks = 0.05 # coeficiente de reflexao especular do modelo
     ns = 0.001 # expoente de reflexao especular
@@ -532,6 +547,7 @@ def desenha_cama():
 
 
 def desenha_sky():
+    global ka_offset
     # aplica a matriz model
     # rotacao
     angle = 0.0
@@ -552,8 +568,8 @@ def desenha_sky():
     
     
     #### define parametros de ilumincao do modelo
-    ka = 0.2 # coeficiente de reflexao ambiente do modelo
-    kd = 0.7 # coeficiente de reflexao difusa do modelo
+    ka = ka_offset+0.1 # coeficiente de reflexao ambiente do modelo
+    kd = 0.5 # coeficiente de reflexao difusa do modelo
     ks = 0.1 # coeficiente de reflexao especular do modelo
     ns = 0.01 # expoente de reflexao especular
     
@@ -574,6 +590,7 @@ def desenha_sky():
     glDrawArrays(GL_TRIANGLES, 3156, 4596-3156) ## renderizando
 
 def desenha_chao():
+    global ka_offset
     # aplica a matriz model
     # rotacao
     angle = 0.0
@@ -587,11 +604,10 @@ def desenha_chao():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
     
     #### define parametros de ilumincao do modelo
-    ka = 0.3 # coeficiente de reflexao ambiente do modelo
+    ka = ka_offset+0.1 # coeficiente de reflexao ambiente do modelo
     kd = 0.6 # coeficiente de reflexao difusa do modelo
-    i_kd = 0.1 # coeficiente de reflexao difusa do modelo
-    ks = 0.1 # coeficiente de reflexao especular do modelo
-    ns = 1.0 # expoente de reflexao especular
+    ks = 0.001 # coeficiente de reflexao especular do modelo
+    ns = 1024.0 # expoente de reflexao especular
 
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
@@ -614,7 +630,7 @@ def desenha_chao():
 def desenha_Tree():
     # aplica a matriz model
     # rotacao
-    global obj_x,obj_y,obj_z
+    global ka_offset
     angle = 0.0
     r_x = 0.0; r_y = 0.0; r_z = 1.0
     
@@ -629,10 +645,10 @@ def desenha_Tree():
 
     
     #### define parametros de ilumincao do modelo
-    ka = 0.45 # coeficiente de reflexao ambiente do modelo
-    kd = 0.55 # coeficiente de reflexao difusa do modelo
-    ks = 0.2 # coeficiente de reflexao especular do modelo
-    ns = 4.0 # expoente de reflexao especular
+    ka = 0.1 +ka_offset # coeficiente de reflexao ambiente do modelo
+    kd = 0.61 # coeficiente de reflexao difusa do modelo
+    ks = 0.001 # coeficiente de reflexao especular do modelo
+    ns = 1024.0 # expoente de reflexao especular
     
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
@@ -651,7 +667,7 @@ def desenha_Tree():
     glDrawArrays(GL_TRIANGLES, 139344, 195714-139344) 
 
 def desenha_frozen():
-    global i_kd,ka,kd,ks,isInside
+    global ka_offset,isInside,turnOn
     # aplica a matriz model
     # rotacao
     angle = -90.0
@@ -666,15 +682,16 @@ def desenha_frozen():
     mat_model = model(angle, r_x, r_y, r_z, t_x, t_y, t_z, s_x, s_y, s_z)
     loc_model = glGetUniformLocation(program, "model")
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
+    
+    ka = 0.3+ka_offset # coeficiente de reflexao ambiente do modelo
     if isInside:
-        #### define parametros de ilumincao do modelo
-        ka = 0.71 # coeficiente de reflexao ambiente do modelo
-        kd = 0.39 # coeficiente de reflexao difusa do modelo
+        kd = 0.9 # coeficiente de reflexao difusa do modelo        
+        if not turnOn:
+            kd = 0.0 
     else:
-        ka=0.001
         kd = 0.001 # coeficiente de reflexao difusa do modelo
     ks = .001 # coeficiente de reflexao especular do modelo
-    ns = .010 # expoente de reflexao especular
+    ns = 512 # expoente de reflexao especular
     
     #i_kd= 0.001
 
@@ -702,6 +719,7 @@ obj_z=-41
 #acho q deu certo. Agora é só ajustar os coeficientes
 # sim. o modelo do anel não parece estar mostrando o specular. mas ahco q
 def desenha_dog():
+    global ka_offset
     # aplica a matriz model
     # rotacao
     angle = -90.0
@@ -718,10 +736,10 @@ def desenha_dog():
     glUniformMatrix4fv(loc_model, 1, GL_TRUE, mat_model)
     
     #### define parametros de ilumincao do modelo
-    ka = 0.2 # coeficiente de reflexao ambiente do modelo
-    kd = 0.8 # coeficiente de reflexao difusa do modelo
+    ka = 0.12+ka_offset # coeficiente de reflexao ambiente do modelo
+    kd = 0.62 # coeficiente de reflexao difusa do modelo
     ks = 0.01 # coeficiente de reflexao especular do modelo
-    ns = 1.0 # expoente de reflexao especular
+    ns = 512 # expoente de reflexao especular
 
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
@@ -737,10 +755,10 @@ def desenha_dog():
     glBindTexture(GL_TEXTURE_2D, 8)
     glDrawArrays(GL_TRIANGLES, 207645, 221943-207645) 
 
-
+ 
 jump = -21.50
 def desenha_gollum():
-    global jump
+    global jump,ka_offset
     # aplica a matriz model
     # rotacao
     angle=90
@@ -757,10 +775,10 @@ def desenha_gollum():
 
     
     #### define parametros de ilumincao do modelo
-    ka = 0.2 # coeficiente de reflexao ambiente do modelo
-    kd = 0.8 # coeficiente de reflexao difusa do modelo
-    ks = 0.2 # coeficiente de reflexao especular do modelo
-    ns = 4.0 # expoente de reflexao especular
+    ka = 0.13 +ka_offset# coeficiente de reflexao ambiente do modelo
+    kd = 0.57 # coeficiente de reflexao difusa do modelo
+    ks = 0.01 # coeficiente de reflexao especular do modelo
+    ns = 512 # expoente de reflexao especular
     
     loc_ka = glGetUniformLocation(program, "ka") # recuperando localizacao da variavel ka na GPU
     glUniform1f(loc_ka, ka) ### envia ka pra gpu
@@ -782,6 +800,7 @@ def desenha_gollum():
     glDrawArrays(GL_TRIANGLES, 227823, 231060-227823) ## renderizando
 
 def desenha_ring():
+    global turnOn
     # aplica a matriz model
     # rotacao
     angle=90
@@ -799,11 +818,15 @@ def desenha_ring():
     #define id da textura do modelo
     glBindTexture(GL_TEXTURE_2D, 13)
     
-    ka = 0.6 # coeficiente de reflexao ambiente do modelo
-    kd = 0.4 # coeficiente de reflexao difusa do modelo
-
-    ks = .70 # coeficiente de reflexao especular do modelo
-    ns = 256.0 # expoente de reflexao especular
+    ka = 0.3 +ka_offset# coeficiente de reflexao ambiente do modelo
+    if isInside:
+        kd = 0.8 # coeficiente de reflexao difusa do modelo        
+        if not turnOn:
+            kd = 0.0 
+    else:
+        kd = 0.001 # coeficiente de reflexao difusa do modelo
+    ks = 1.0 # coeficiente de reflexao especular do modelo
+    ns = 2.0 # expoente de reflexao especular
     #acho que é só entender direito como funciona isso kkk
     #
 
@@ -869,7 +892,6 @@ def desenha_sun(ang):
     glBindTexture(GL_TEXTURE_2D, 14)    
     glDrawArrays(GL_TRIANGLES, 233364, 236244-233364) ## renderizando
 
-
 def desenha_lampada():
     global isInside
     # aplica a matriz model
@@ -878,7 +900,7 @@ def desenha_lampada():
     r_x = 0.0; r_y = 0.0; r_z = 1.0
     
     # translacao
-    t_x = 23; t_y = 168; t_z =  -41
+    t_x = 19; t_y = 192; t_z = 0
     
     # escala
     s_x = 1.0; s_y = 1.0; s_z = 1.0
@@ -914,9 +936,6 @@ def desenha_lampada():
     glDrawArrays(GL_TRIANGLES, 236244, 239124-236244) ## renderizando
 
 
-
-polygonal_mode = False
-
 #check if the observer is inside house
 def checkPosition(cameraPos):
     global isInside
@@ -925,43 +944,27 @@ def checkPosition(cameraPos):
     else:
         isInside=False
 def key_event(window,key,scancode,action,mods):
-    global cameraPos, cameraFront, cameraUp,polygonal_mode,obj_x,obj_y,obj_z,kd,ka,ks,ks
-    """
-    #controles de objeto (para descobrir os valores de translação de cada matriz model)
+    global cameraPos, cameraFront, cameraUp,turnOn,ka_offset,obj_x,obj_y,obj_z
+    
+    #para ajuste de posições
     if key == 266 and (action==1 or action==2): # tecla pageup
-        i_kd+=.15
-        print('i_kd: ',i_kd)
-    if key == 267 and (action==1 or action==2): # tecla pagedown
-        i_kd-=.15
-        print('i_kd: ',i_kd)"""
-    if key == 268 and (action==1 or action==2): # tecla home
-        #obj_y+=.5
-        ka+=0.15
-        print("ka ",ka)
-        #print('Y: ',obj_y)
-    if key == 269 and (action==1 or action==2): # tecla end
-        #obj_y-=.5
-        ka-=0.15
-        print("ka ",ka)
-        #print('Y: ',obj_y)
-    if key == 260 and (action==1 or action==2): # tecla insert
-        #obj_x+=.5
-        kd+=0.15
-        print("kd ",kd)
-        #print('X: ',obj_x)
-    if key == 261 and (action==1 or action==2): # tecla delete
-        #obj_x-=.5
-        kd-=0.15
-        print("kd ",kd)
-        #print('X: ',obj_x)
+        obj_y+=.5
+        print('Y: ',obj_y)
+    if key == 267 and (action==1 or action==2): # tecla pagedown        
+        obj_y-=.5
+        print('Y: ',obj_y)
     if key == 263 and (action==1 or action==2): # tecla up
         obj_z+=.5
+        print('Z: ',obj_z)
     if key == 262 and (action==1 or action==2): # tecla down
         obj_z-=.5
+        print('Z: ',obj_z)
     if key == 265 and (action==1 or action==2): # tecla ri
         obj_x+=.5
+        print('X: ',obj_x)
     if key == 264 and (action==1 or action==2): # tecla le
         obj_x-=.5
+        print('X: ',obj_x)
 
     cameraSpeed = 3.2
 
@@ -983,15 +986,14 @@ def key_event(window,key,scancode,action,mods):
     
 
     if key == 76 and (action==1 or action==2): # tecla l 
-        if kd == 0:
-            kd=0.9
-        else:
-            kd=0
+        turnOn=not turnOn
     
     if key == 85 and (action==1 or action==2): # tecla u
-        ka+=0.05
+        ka_offset+=0.05
+        print("ambient (+)")
     if key == 80 and (action==1 or action==2): # tecla p
-        ka-=0.05
+        ka_offset-=0.05
+        print("ambient (-)")
     checkPosition(cameraPos)
         
 firstMouse = True
@@ -1087,13 +1089,6 @@ while not glfw.window_should_close(window):
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     
     glClearColor(1.0, 1.0, 1.0, 1.0)
-    
-    if polygonal_mode==True:
-        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE)
-    if polygonal_mode==False:
-        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL)
-    
-    
 
     desenha_casa()   
     desenha_cama()

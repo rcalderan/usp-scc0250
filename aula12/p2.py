@@ -467,16 +467,20 @@ def key_event(window,key,scancode,action,mods):
     
     if key == 82 and (action==1 or action==2): # tecla T
         ks+=0.1
+        print("ks ",ks)
     if key == 70 and (action==1 or action==2): # tecla G
         ks-=0.1
+        print("ks ",ks)
         
     if key == 84 and (action==1 or action==2): # tecla R
         n+=.5
         ns=2**n
+        print("ns ",ns)
         
     if key == 71 and (action==1 or action==2): # tecla F
         n-=.5
         ns=2**n
+        print("ns ",ns)
 
         
 firstMouse = True
